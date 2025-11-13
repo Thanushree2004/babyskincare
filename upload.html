@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload - Smart Baby Skin Scanner</title>
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/4762/4762967.png" type="image/png">
+  <style>
+    body {background-color: #eaf7ff; font-family: Arial, sans-serif; margin: 0; padding: 0; text-align: center;}
+    nav {background-color: #4CAF50; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between;}
+    .logo {color: white; font-size: 24px; font-weight: bold;}
+    .menu-icon {font-size: 24px; color: white; cursor: pointer;}
+    .menu-items {display: none; flex-direction: column; position: absolute; top: 50px; left: 0; background-color: #4CAF50; width: 100%; padding: 10px 0; box-shadow: 0 4px 8px rgba(0,0,0,0.2);}
+    .menu-items li {margin: 10px 0; text-align: center;}
+    .menu-items li a {color: white; text-decoration: none; font-size: 18px; font-weight: bold;}
+    .menu-items li a:hover {text-decoration: underline;}
+    .container {max-width: 1200px; margin: 50px auto; padding: 20px; background-color: white; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);}
+    h1 {color: #2c3e50; margin-bottom: 20px;}
+    p {color: #555; font-size: 16px; margin-bottom: 30px;}
+    .upload-section {display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;}
+    .upload-box, .preview-box, .result-box {width: 28%; background-color: #f9f9f9; border-radius: 10px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin: 10px;}
+    .upload-box input[type="file"] {margin-top: 10px; padding: 5px; font-size: 14px;}
+    .upload-box button {margin-top: 10px; padding: 8px 15px; font-size: 14px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;}
+    .upload-box button:hover {background-color: #45a049;}
+    img {max-width: 100%; border-radius: 10px; margin-top: 10px;}
+    .result-box ul {text-align: left; padding: 0; list-style: none;}
+    .result-box ul li {margin-bottom: 10px; font-size: 14px;}
+
+    /* Camera UI */
+    .camera-modal {position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000;}
+    .camera-card {background: white; padding: 12px; border-radius: 8px; width: 90%; max-width: 480px; text-align: center;}
+    video {width: 100%; height: auto; border-radius: 8px;}
+    .camera-controls {margin-top: 8px; display:flex; gap:8px; justify-content:center;}
+    .hidden-canvas {display:none;}
+  </style>
+</head>
+<body>
+
+<!-- Navbar Start -->
+<nav>
+  <div class="logo" data-en="👶 Baby Skin Care" data-kn="👶 ಬೇಬಿ ಸ್ಕಿನ್ ಕೇರ್">👶 Baby Skin Care</div>
+  <div class="menu-icon" id="menuIcon">☰</div>
+  <ul class="menu-items" id="menuItems">
+    <li><a href="home.html" data-en="Home" data-kn="ಮುಖಪುಟ">Home</a></li>
+    <li><a href="upload.html" data-en="Upload" data-kn="ಅಪ್ಲೋಡ್">Upload</a></li>
+    <li><a href="about.html" data-en="About" data-kn="ಕಂಪನಿ ಬಗ್ಗೆ">About</a></li>
+    <li><a href="contact_help.html" data-en="Contact Us & Help" data-kn="ಸಂಪರ್ಕಿಸಿ ಮತ್ತು ಸಹಾಯ">Contact Us & Help</a></li>
+  </ul>
+  <select id="languageSwitcher">
+    <option value="en">English</option>
+    <option value="kn">ಕನ್ನಡ</option>
+  </select>
+</nav>
+<!-- Navbar End -->
+
+<!-- Main Content Start -->
+<div class="container">
+  <h1 data-en="Smart Baby Rash Detector (Demo)" data-kn="ಸ್ಮಾರ್ಟ್ ಬೇಬಿ ರಾಶಿ ಪತ್ತೆಹಚ್ಚುವಿಕೆ (ಡೆಮೊ)">Smart Baby Rash Detector (Demo)</h1>
+  <p data-en="Upload a clear photo of the baby's skin (make sure the baby is comfortable). This is a demo detector — replace with a trained model for production."
+     data-kn="ಮಗುವಿನ ಚರ್ಮದ ಸ್ಪಷ್ಟವಾದ ಫೋಟೋವನ್ನು ಅಪ್ಲೋಡ್ ಮಾಡಿ (ಮಗು ಆರಾಮವಾಗಿರುವುದನ್ನು ಖಚಿತಪಡಿಸಿ). ಇದು ಡೆಮೊ ಪತ್ತೆಹಚ್ಚುವಿಕೆ — ಉತ್ಪಾದನೆಗಾಗಿ ತರಬೇತುಗೊಂಡ ಮಾದರಿಯಿಂದ ಬದಲಾಯಿಸಿ.">
+     Upload a clear photo of the baby's skin (make sure the baby is comfortable). This is a demo detector — replace with a trained model for production.
+  </p>
+
+  <div class="upload-section">
+    <!-- Upload Box -->
+    <div class="upload-box">
+      <h2 data-en="Upload Image" data-kn="ಚಿತ್ರವನ್ನು ಅಪ್ಲೋಡ್ ಮಾಡಿ">Upload Image</h2>
+      <input type="file" accept="image/*" id="imageInput">
+      <div style="margin-top:10px;">
+        <button id="openCameraButton" data-en="Use Camera" data-kn="ಕ್ಯಾಮೆರಾ ಬಳಸಿ">Use Camera</button>
+        <button id="checkRashButton" data-en="Check Rash" data-kn="ರಾಶಿ ಪರಿಶೀಲಿಸಿ">Check Rash</button>
+      </div>
+    </div>
+
+    <!-- Preview Box -->
+    <div class="preview-box" id="previewBox" style="display: none;">
+      <h2 data-en="Image Preview" data-kn="ಚಿತ್ರದ ಪೂರ್ವದೃಶ್ಯ">Image Preview</h2>
+      <img id="previewImage" src="" alt="Preview Image">
+    </div>
+
+    <!-- Result Box -->
+    <div class="result-box" id="resultBox" style="display: none;">
+      <h2 data-en="Prediction" data-kn="ಅನುಮಾನ">Prediction</h2>
+      <ul>
+        <li><strong data-en="Rash Type:" data-kn="ರಾಶಿ ಪ್ರಕಾರ:">Rash Type:</strong> <span id="rashType">-</span></li>
+        <li><strong data-en="Confidence:" data-kn="ವಿಶ್ವಾಸದ ಮಟ್ಟ:">Confidence:</strong> <span id="confidence">-</span></li>
+        <li><strong data-en="Care Tips:" data-kn="ಕಾಳಜಿ ಸಲಹೆಗಳು:">Care Tips:</strong></li>
+        <ul id="careTipsList"></ul>
+      </ul>
+    </div>
+  </div>
+</div>
+<!-- Main Content End -->
+
+<!-- Camera Modal -->
+<div class="camera-modal" id="cameraModal">
+  <div class="camera-card">
+    <video id="cameraVideo" autoplay playsinline></video>
+    <div class="camera-controls">
+      <button id="captureButton" data-en="Capture" data-kn="ಕ್ಯಾಪ್ಚರ್">Capture</button>
+      <button id="closeCameraButton" data-en="Close" data-kn="ಮುಚ್ಚಿರಿ">Close</button>
+    </div>
+    <canvas id="captureCanvas" class="hidden-canvas"></canvas>
+  </div>
+</div>
+
+<script>
+  const menuIcon = document.getElementById('menuIcon');
+  const menuItems = document.getElementById('menuItems');
+  const imageInput = document.getElementById('imageInput');
+  const previewImage = document.getElementById('previewImage');
+  const previewBox = document.getElementById('previewBox');
+  const checkRashButton = document.getElementById('checkRashButton');
+  const resultBox = document.getElementById('resultBox');
+  const rashTypeEl = document.getElementById('rashType');
+  const confidenceEl = document.getElementById('confidence');
+  const careTipsList = document.getElementById('careTipsList');
+  const BACKEND_URL = "http://127.0.0.1:5000";
+
+  menuIcon.addEventListener('click', () => {
+    menuItems.style.display = menuItems.style.display === 'block' ? 'none' : 'block';
+  });
+
+  imageInput.addEventListener('change', function () {
+    const file = imageInput.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        previewImage.src = e.target.result;
+        previewBox.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  checkRashButton.addEventListener('click', async function () {
+    if (!imageInput.files[0]) {
+      alert("Please upload an image first!");
+      return;
+    }
+    resultBox.style.display = 'block';
+    checkRashButton.disabled = true;
+    checkRashButton.textContent = "Analyzing...";
+
+    try {
+      const lang = localStorage.getItem('lang') || 'en';
+      const fd = new FormData();
+      fd.append('file', imageInput.files[0]);
+      const resp = await fetch(`${BACKEND_URL}/predict?lang=${lang}`, { method: 'POST', body: fd });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Prediction failed');
+
+      rashTypeEl.textContent = data.rash_type || '-';
+      confidenceEl.textContent = data.confidence || '-';
+
+      careTipsList.innerHTML = '';
+      const tips = data.care_tips && data.care_tips.length ? data.care_tips : ["If uncertain, consult a pediatrician."];
+      tips.forEach(tip => {
+        const li = document.createElement('li');
+        li.textContent = tip;
+        careTipsList.appendChild(li);
+      });
+    } catch (err) {
+      alert('Error: ' + (err.message || 'Prediction failed.'));
+    } finally {
+      checkRashButton.disabled = false;
+      checkRashButton.textContent = checkRashButton.getAttribute('data-en') || 'Check Rash';
+    }
+  });
+
+  // Camera
+  const openCameraButton = document.getElementById('openCameraButton');
+  const cameraModal = document.getElementById('cameraModal');
+  const cameraVideo = document.getElementById('cameraVideo');
+  const captureButton = document.getElementById('captureButton');
+  const closeCameraButton = document.getElementById('closeCameraButton');
+  const captureCanvas = document.getElementById('captureCanvas');
+  let currentStream = null;
+
+  openCameraButton.addEventListener('click', async () => {
+    try {
+      currentStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      cameraVideo.srcObject = currentStream;
+      cameraModal.style.display = 'flex';
+    } catch (err) {
+      alert("Unable to access camera: " + err.message);
+    }
+  });
+
+  captureButton.addEventListener('click', () => {
+    if (!currentStream) return;
+    const w = cameraVideo.videoWidth || 1280;
+    const h = cameraVideo.videoHeight || 720;
+    captureCanvas.width = w;
+    captureCanvas.height = h;
+    const ctx = captureCanvas.getContext('2d');
+    ctx.drawImage(cameraVideo, 0, 0, w, h);
+    captureCanvas.toBlob((blob) => {
+      if (!blob) return;
+      const file = new File([blob], 'capture.jpg', { type: blob.type });
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      imageInput.files = dt.files;
+      previewImage.src = URL.createObjectURL(blob);
+      previewBox.style.display = 'block';
+      stopCamera();
+      cameraModal.style.display = 'none';
+    }, 'image/jpeg', 0.92);
+  });
+
+  closeCameraButton.addEventListener('click', () => {
+    stopCamera();
+    cameraModal.style.display = 'none';
+  });
+
+  function stopCamera() {
+    if (currentStream) {
+      currentStream.getTracks().forEach(t => t.stop());
+      currentStream = null;
+      cameraVideo.srcObject = null;
+    }
+  }
+
+  // Language switcher
+  const switcher = document.getElementById('languageSwitcher');
+  function setLanguage(lang) {
+    document.querySelectorAll('[data-en]').forEach(el => el.textContent = el.getAttribute('data-' + lang));
+    document.querySelectorAll('button[data-en]').forEach(btn => btn.textContent = btn.getAttribute('data-' + lang));
+    localStorage.setItem('lang', lang);
+  }
+  const savedLang = localStorage.getItem('lang') || 'en';
+  switcher.value = savedLang;
+  setLanguage(savedLang);
+  switcher.addEventListener('change', () => setLanguage(switcher.value));
+
+  window.addEventListener('beforeunload', stopCamera);
+</script>
+
+<script src="./lang.js"></script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+requests
+Pillow
+pandas
+tensorflow
+scikit-learn

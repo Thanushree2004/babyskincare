@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact Us & Help - Smart Baby Skin Scanner</title>
+<link rel="icon" href="https://cdn-icons-png.flaticon.com/512/4762/4762967.png" type="image/png">
+<style>
+  body {background: url('background.png') no-repeat center center; background-size: cover; font-family: Arial, sans-serif; margin: 0; text-align: center; min-height: 100vh; display: flex; flex-direction: column; align-items: center;}
+  nav {background-color: #4CAF50; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box;}
+  .logo {color: white; font-size: 24px; font-weight: bold;}
+  .menu-icon {font-size: 24px; color: white; cursor: pointer;}
+  .menu-items {display: none; flex-direction: column; position: absolute; top: 50px; left: 0; background-color: #4CAF50; width: 100%; padding: 10px 0; box-shadow: 0 4px 8px rgba(0,0,0,0.2);}
+  .menu-items li {margin: 10px 0; text-align: center;}
+  .menu-items li a {color: white; text-decoration: none; font-size: 18px; font-weight: bold;}
+  .menu-items li a:hover {text-decoration: underline;}
+  section {margin-top: 30px; width: 90%; max-width: 500px;}
+  form {background: rgba(255,255,255,0.9); padding: 20px; border-radius: 10px; text-align: left;}
+  input, textarea {width: 100%; padding: 10px; margin: 10px 0; border:1px solid #ddd; border-radius: 5px; font-size:16px; box-sizing: border-box;}
+  button {width: 100%; padding: 12px; background-color: #4CAF50; color:white; border:none; border-radius:5px; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; gap:8px; transition: background 0.3s;}
+  button:disabled {background-color:#2e7d32; cursor:not-allowed;}
+  .spinner {border:2px solid #f3f3f3; border-top:2px solid white; border-radius:50%; width:14px; height:14px; animation: spin 1s linear infinite;}
+  @keyframes spin {0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+
+/* Chatbot Styles */
+  .chatbot {position:fixed; bottom:15px; right:15px; width:60px; height:60px; background:white; border-radius:50%; box-shadow:0 4px 10px rgba(0,0,0,0.3); display:flex; flex-direction:column; overflow:hidden; z-index:1000; transition: all 0.4s ease;}
+  .chatbot.expanded {width:300px; height:380px; border-radius:10px;}
+  .chat-header {background:#4CAF50; color:white; padding:10px; font-weight:bold; text-align:center; cursor:pointer;}
+  .chat-body {flex:1; padding:10px; overflow-y:auto; font-size:14px; text-align:left; scroll-behavior:smooth; opacity:0; transition:opacity 0.3s;}
+  .chat-body.visible{opacity:1;}
+  .chat-message{
+    margin:10px 0;
+    padding:12px 14px;
+    border-radius:12px;
+    word-wrap:break-word;
+    line-height:1.6;
+    font-size:15px;
+    opacity:0;
+    animation:fadeIn 0.3s forwards;
+    max-width:80%;
+  }
+  .user-message {background:#dcf8c6; align-self:flex-end;}
+  .bot-message {background:#e6e6ff; align-self:flex-start;}
+  @keyframes fadeIn {from{opacity:0;} to{opacity:1;}}
+  .chat-footer {display:flex; flex-direction:column; border-top:1px solid #ddd; opacity:0; transition:opacity 0.3s;}
+  .chat-footer.visible {opacity:1;}
+  .quick-replies {display:flex; flex-wrap:wrap; gap:5px; padding:5px; border-top:1px solid #ddd; background:#fafafa;}
+  .quick-replies button {flex:1 1 auto; padding:8px; border-radius:5px; border:1px solid #4CAF50; background:white; color:#4CAF50; font-size:14px; cursor:pointer; transition:all 0.2s;}
+  .quick-replies button:hover {background:#4CAF50; color:white;}
+  @media(max-width:500px){.chatbot.expanded{width:90%; height:350px;} form{width:100%; padding:15px;} input,textarea{font-size:14px; padding:8px;} button{font-size:14px; padding:10px;}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo" data-en="👶 Baby Skin Care" data-kn="👶 ಬೇಬಿ ಸ್ಕಿನ್ ಕೇರ್">👶 Baby Skin Care</div>
+  <div class="menu-icon" id="menuIcon">☰</div>
+  <ul class="menu-items" id="menuItems">
+    <li><a href="home.html" data-en="Home" data-kn="ಮುಖಪುಟ">Home</a></li>
+    <li><a href="upload.html" data-en="Upload" data-kn="ಅಪ್ಲೋಡ್">Upload</a></li>
+    <li><a href="about.html" data-en="About" data-kn="ಕಂಪನಿ ಬಗ್ಗೆ">About</a></li>
+    <li><a href="contact_help.html" data-en="Contact Us & Help" data-kn="ಸಂಪರ್ಕಿಸಿ ಮತ್ತು ಸಹಾಯ">Contact Us & Help</a></li>
+  </ul>
+  <!-- Language Switcher -->
+  <select id="languageSwitcher">
+    <option value="en">English</option>
+    <option value="kn">ಕನ್ನಡ</option>
+  </select>
+</nav>
+
+<section>
+  <h1 data-en="Contact Us & Help" data-kn="ಸಂಪರ್ಕಿಸಿ ಮತ್ತು ಸಹಾಯ">Contact Us & Help</h1>
+  <p data-en="If you have any questions or need assistance, feel free to reach out to us."
+     data-kn="ನಿಮಗೆ ಯಾವುದೇ ಪ್ರಶ್ನೆಗಳಿದ್ದರೆ ಅಥವಾ ಸಹಾಯ ಬೇಕಿದ್ದರೆ, ನಮ್ಮನ್ನು ಸಂಪರ್ಕಿಸಿ.">
+     If you have any questions or need assistance, feel free to reach out to us.
+  </p>
+  <form id="contactForm">
+    <input type="text" id="name" data-en-placeholder="Your Name" data-kn-placeholder="ನಿಮ್ಮ ಹೆಸರು" placeholder="Your Name" required>
+    <input type="email" id="email" data-en-placeholder="Your Email" data-kn-placeholder="ನಿಮ್ಮ ಇಮೇಲ್" placeholder="Your Email" required>
+    <textarea id="message" data-en-placeholder="Your Message" data-kn-placeholder="ನಿಮ್ಮ ಸಂದೇಶ" placeholder="Your Message"></textarea>
+    <button type="submit" id="sendBtn" data-en="Send Message" data-kn="ಸಂದೇಶ ಕಳುಹಿಸಿ">Send Message</button>
+  </form>
+</section>
+
+<div class="chatbot" id="chatbot">
+  <div class="chat-header" id="chatHeader">💬</div>
+  <div class="chat-body" id="chatBody"></div>
+  <div class="chat-footer" id="chatFooter">
+    <div class="quick-replies">
+      <button data-msg="Hi" data-en="Hi" data-kn="ಹಲೋ">Hi</button>
+      <button data-msg="What is this project" data-en="About Project" data-kn="ಯೋಜನೆ ಬಗ್ಗೆ">About Project</button>
+      <button data-msg="How does it work" data-en="How it works" data-kn="ಇದು ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ">How it works</button>
+      <button data-msg="Contact" data-en="Contact" data-kn="ಸಂಪರ್ಕಿಸಿ">Contact</button>
+      <button data-msg="Thanks" data-en="Thanks" data-kn="ಧನ್ಯವಾದಗಳು">Thanks</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Navbar toggle
+  const menuIcon=document.getElementById('menuIcon');
+  const menuItems=document.getElementById('menuItems');
+  menuIcon.addEventListener('click',()=>{menuItems.style.display=menuItems.style.display==='block'?'none':'block';});
+
+  // Contact form
+  const form=document.getElementById('contactForm');
+  const sendBtn=document.getElementById('sendBtn');
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    const name=document.getElementById('name').value.trim();
+    const email=document.getElementById('email').value.trim();
+    const message=document.getElementById('message').value.trim();
+    if(!name||!email||!message){alert("Please fill in all fields."); return;}
+    sendBtn.disabled=true;
+    sendBtn.innerHTML='<div class="spinner"></div> Opening Gmail…';
+    const subject=encodeURIComponent("Contact Form Submission from Smart Baby Skin Scanner");
+    const body=encodeURIComponent(`Name: ${name}\nEmail: ${email}\nMessage:\n${message}`);
+    const gmailUrl=`https://mail.google.com/mail/?view=cm&fs=1&to=neocare.help@gmail.com&su=${subject}&body=${body}`;
+    window.open(gmailUrl,'_blank');
+    setTimeout(()=>{sendBtn.disabled=false; sendBtn.innerText=sendBtn.getAttribute("data-en"); form.reset();},2000);
+  });
+
+  // Chatbot with bilingual answers
+  const chatbot=document.getElementById("chatbot");
+  const chatHeader=document.getElementById("chatHeader");
+  const chatBody=document.getElementById("chatBody");
+  const chatFooter=document.getElementById("chatFooter");
+  const quickReplies=document.querySelectorAll(".quick-replies button");
+
+  function appendMessage(msg,className){
+    const div=document.createElement("div");
+    div.className="chat-message "+className;
+    div.innerText=msg;
+    chatBody.appendChild(div);
+    chatBody.scrollTop=chatBody.scrollHeight;
+  }
+
+  function appendTypingIndicator(){
+    const div=document.createElement("div");
+    div.className="chat-message bot-message";
+    div.id="typingIndicator";
+    div.innerText="Bot is typing...";
+    chatBody.appendChild(div);
+    chatBody.scrollTop=chatBody.scrollHeight;
+    return div;
+  }
+
+  const responses={
+    "Hi":{en:"Hello 👋! I’m Baby Skin Helper 🤖. How can I assist you today?",kn:"ಹಲೋ 👋! ನಾನು ಬೇಬಿ ಸ್ಕಿನ್ ಸಹಾಯಕ 🤖. ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?"},
+    "What is this project":{en:"This is the Smart Baby Skin Scanner 🍼✨. It helps parents detect and monitor skin issues in babies using AI-powered analysis.",kn:"ಇದು ಸ್ಮಾರ್ಟ್ ಬೇಬಿ ಸ್ಕಿನ್ ಸ್ಕ್ಯಾನರ್ 🍼✨. ಇದು ಪೋಷಕರಿಗೆ ಮಕ್ಕಳ ಚರ್ಮದ ಸಮಸ್ಯೆಗಳನ್ನು AI ಬಳಸಿ ಪತ್ತೆಹಚ್ಚಲು ಸಹಾಯ ಮಾಡುತ್ತದೆ."},
+    "How does it work":{en:"Parents upload a photo of the baby's skin 👶📷. The AI model analyzes the image and gives early indications of possible skin issues. This is only a guidance tool, not a medical diagnosis.",kn:"ಪೋಷಕರು ಮಗುವಿನ ಚರ್ಮದ ಫೋಟೋವನ್ನು ಅಪ್ಲೋಡ್ ಮಾಡುತ್ತಾರೆ 👶📷. AI ಮಾದರಿ ಚಿತ್ರವನ್ನು ವಿಶ್ಲೇಷಿಸಿ ಚರ್ಮದ ಸಮಸ್ಯೆಗಳ ಮುಂಚಿತ ಸೂಚನೆ ನೀಡುತ್ತದೆ. ಇದು ಕೇವಲ ಮಾರ್ಗದರ್ಶನ ಸಾಧನ, ವೈದ್ಯಕೀಯ ನಿರ್ಣಯವಲ್ಲ."},
+    "Contact":{en:"You can reach us anytime at 📧 neocare.help@gmail.com.",kn:"ನೀವು ಯಾವಾಗ ಬೇಕಾದರೂ ನಮ್ಮನ್ನು ಸಂಪರ್ಕಿಸಬಹುದು 📧 neocare.help@gmail.com."},
+    "Thanks":{en:"You're welcome! 😊 Always here to help.",kn:"ಸ್ವಾಗತ! 😊 ನಾನು ಯಾವಾಗಲೂ ಸಹಾಯ ಮಾಡಲು ಇಲ್ಲಿದ್ದೇನೆ."}
+  };
+
+  async function handleMessage(msg){
+    if(!msg) return;
+    appendMessage(msg,"user-message");
+    const typingDiv=appendTypingIndicator();
+    const lang = localStorage.getItem("lang") || "en";
+    let aiResponse=responses[msg] ? responses[msg][lang] : 
+      (lang==="en" ? "I'm not sure about that 🤔, please email us at neocare.help@gmail.com." : "ನಾನು ಖಚಿತವಾಗಿ ತಿಳಿದಿಲ್ಲ 🤔, ದಯವಿಟ್ಟು ನಮಗೆ ಇಮೇಲ್ ಮಾಡಿ: neocare.help@gmail.com.");
+    typingDiv.innerText=aiResponse;
+  }
+
+  quickReplies.forEach(btn=>{
+    btn.addEventListener("click",()=>{handleMessage(btn.dataset.msg);});
+  });
+  chatHeader.addEventListener("click",()=>{
+    chatbot.classList.toggle("expanded");
+    chatBody.classList.toggle("visible");
+    chatFooter.classList.toggle("visible");
+    if(chatBody.innerHTML===""){setTimeout(()=>appendMessage("Hi! I’m Baby Skin Helper 🤖. How can I assist you today?","bot-message"),300);}
+  });
+
+  // ✅ Language Switcher for whole page + chatbot
+  const switcher=document.getElementById("languageSwitcher");
+  function setLanguage(lang) {
+    // normal text
+    document.querySelectorAll("[data-en]").forEach(el=>{
+      el.textContent=el.getAttribute("data-"+lang);
+    });
+    // placeholders
+    document.querySelectorAll("[data-en-placeholder]").forEach(el=>{
+      el.placeholder=el.getAttribute("data-"+lang+"-placeholder");
+    });
+    // buttons
+    document.querySelectorAll(".quick-replies button").forEach(btn=>{
+      btn.textContent=btn.getAttribute("data-"+lang);
+    });
+    // form button
+    sendBtn.innerText=sendBtn.getAttribute("data-"+lang);
+    localStorage.setItem("lang",lang);
+  }
+
+  const savedLang=localStorage.getItem("lang")||"en";
+  switcher.value=savedLang;
+  setLanguage(savedLang);
+  switcher.addEventListener("change",()=>{setLanguage(switcher.value);});
+</script>
+</body>
+</html>
