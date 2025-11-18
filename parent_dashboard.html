@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parent Dashboard</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f6fbff;
+    }
+
+    nav {
+      background: #4CAF50;
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 18px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 20px;
+    }
+
+    h2 {
+      color: #333;
+      text-align: center;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    button {
+      background: #4CAF50;
+      color: white;
+      padding: 10px 14px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #45a049;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    .baby-list {
+      margin-top: 10px;
+    }
+
+    .baby-item {
+      padding: 12px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logout {
+      background: red;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<nav>
+  <span data-en="Parent Dashboard" data-kn="ಪೋಷಕರ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್">Parent Dashboard</span>
+
+  <div>
+    <select id="languageSwitcher">
+      <option value="en">English</option>
+      <option value="kn">ಕನ್ನಡ</option>
+    </select>
+
+    <button class="logout" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<!-- MAIN CONTAINER -->
+<div class="container">
+
+  <h2 data-en="Welcome Parent" data-kn="ಸ್ವಾಗತ ಪೋಷಕರು">Welcome Parent</h2>
+
+  <!-- SECTION 1: Add Baby -->
+  <div class="card">
+    <h3 data-en="Add Baby" data-kn="ಶಿಶುವನ್ನು ಸೇರಿಸಿ">Add Baby</h3>
+
+    <label data-en="Baby Name" data-kn="ಶಿಶುವಿನ ಹೆಸರು">Baby Name</label>
+    <input type="text" id="babyName">
+
+    <label data-en="Date of Birth" data-kn="ಹುಟ್ಟಿದ ದಿನಾಂಕ">Date of Birth</label>
+    <input type="date" id="babyDOB">
+
+    <button onclick="addBaby()">Add Baby</button>
+
+    <p id="addBabyMsg" style="color:green;"></p>
+  </div>
+
+  <!-- SECTION 2: Baby List -->
+  <div class="card">
+    <h3 data-en="Your Babies" data-kn="ನಿಮ್ಮ ಶಿಶುಗಳು">Your Babies</h3>
+    <div id="babyList" class="baby-list"></div>
+  </div>
+
+  <!-- SECTION 3: Skin Scan -->
+  <div class="card">
+    <h3 data-en="Skin Scan" data-kn="ಚರ್ಮ ಸ್ಕ್ಯಾನ್">Skin Scan</h3>
+
+    <label data-en="Select Baby" data-kn="ಶಿಶುವನ್ನು ಆಯ್ಕೆಮಾಡಿ">Select Baby</label>
+    <select id="scanBabySelect"></select>
+
+    <label data-en="Upload Skin Image" data-kn="ಚರ್ಮದ ಚಿತ್ರವನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ">Upload Image</label>
+    <input type="file" id="skinImage">
+
+    <button onclick="scanSkin()">Scan</button>
+
+    <p id="scanMsg" style="color:blue;"></p>
+  </div>
+
+  <!-- SECTION 4: History -->
+  <div class="card">
+    <h3 data-en="Scan History" data-kn="ಸ್ಕ್ಯಾನ್ ಇತಿಹಾಸ">Scan History</h3>
+
+    <button onclick="viewHistory()">View History</button>
+    <div id="historyList"></div>
+  </div>
+
+</div>
+
+<script>
+  const BACKEND = "http://127.0.0.1:5000";
+
+  // -------------------------------
+  // LANG SWITCH
+  // -------------------------------
+  const switcher = document.getElementById("languageSwitcher");
+  const saved = localStorage.getItem("lang") || "en";
+
+  switcher.value = saved;
+  setLanguage(saved);
+  switcher.addEventListener("change", () => setLanguage(switcher.value));
+
+  function setLanguage(lang) {
+    document.querySelectorAll("[data-en]").forEach(el => {
+      el.textContent = el.getAttribute("data-" + lang);
+    });
+    localStorage.setItem("lang", lang);
+  }
+
+  // -------------------------------
+  // CHECK LOGIN
+  // -------------------------------
+  const token = localStorage.getItem("access_token");
+  const role = localStorage.getItem("role");
+  const userId = localStorage.getItem("user_id");
+
+  if (!token || role !== "parent") {
+    alert("Unauthorized access! Please login as Parent.");
+    window.location.href = "parent_login.html";
+  }
+
+  // -------------------------------
+  // LOGOUT
+  // -------------------------------
+  function logout() {
+    localStorage.clear();
+    window.location.href = "parent_login.html";
+  }
+
+  // -------------------------------
+  // FETCH BABIES
+  // -------------------------------
+  async function loadBabies() {
+    const res = await fetch(`${BACKEND}/api/babies/${userId}`);
+    const data = await res.json();
+    const babyList = document.getElementById("babyList");
+    const babySelect = document.getElementById("scanBabySelect");
+
+    babyList.innerHTML = "";
+    babySelect.innerHTML = "";
+
+    data.forEach(baby => {
+      babyList.innerHTML += `
+        <div class="baby-item">
+          <strong>${baby.name}</strong>
+          <span>${baby.date_of_birth}</span>
+        </div>
+      `;
+
+      babySelect.innerHTML += `
+        <option value="${baby.id}">${baby.name}</option>
+      `;
+    });
+  }
+
+  // -------------------------------
+  // ADD BABY
+  // -------------------------------
+  async function addBaby() {
+    const name = document.getElementById("babyName").value.trim();
+    const dob = document.getElementById("babyDOB").value;
+
+    if (!name || !dob) {
+      alert("Fill all baby details");
+      return;
+    }
+
+    const res = await fetch(`${BACKEND}/api/babies/add`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        parent_id: userId,
+        name,
+        date_of_birth: dob
+      })
+    });
+
+    const data = await res.json();
+    document.getElementById("addBabyMsg").textContent = data.message;
+
+    loadBabies();
+  }
+
+  // -------------------------------
+  // SCAN SKIN IMAGE
+  // -------------------------------
+  async function scanSkin() {
+    const baby_id = document.getElementById("scanBabySelect").value;
+    const file = document.getElementById("skinImage").files[0];
+
+    if (!baby_id || !file) {
+      alert("Please select baby and upload image");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("baby_id", baby_id);
+
+    const res = await fetch(`${BACKEND}/predict`, {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+    document.getElementById("scanMsg").textContent =
+      `Prediction: ${data.rash_type} (Confidence: ${data.confidence}%)`;
+  }
+
+  // -------------------------------
+  // VIEW HISTORY
+  // -------------------------------
+  async function viewHistory() {
+    const res = await fetch(`${BACKEND}/history/${userId}`);
+    const data = await res.json();
+
+    const area = document.getElementById("historyList");
+    area.innerHTML = "";
+
+    data.forEach(item => {
+      area.innerHTML += `
+        <div class="baby-item">
+          <strong>${item.rash_type}</strong>
+          <span>${item.created_at}</span>
+        </div>
+      `;
+    });
+  }
+
+  // Load data initially
+  loadBabies();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login - Baby Skin Care</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #eaf7ff;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    .login-box {
+      margin: 80px auto;
+      background: white;
+      padding: 30px;
+      width: 350px;
+      border-radius: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    input {
+      width: 90%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background: #45a049;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="login-box">
+  <h2>Login</h2>
+
+  <input type="email" id="email" placeholder="Enter Email">
+  <input type="password" id="password" placeholder="Enter Password">
+
+  <button id="loginBtn">Login</button>
+</div>
+
+<script>
+  const BACKEND_URL = "http://127.0.0.1:5000";
+
+  document.getElementById("loginBtn").addEventListener("click", async () => {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    if (!email || !password) {
+      alert("Enter email and password!");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/login`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+
+      // Save token + role
+      localStorage.setItem("access_token", data.access_token);
+      localStorage.setItem("role", data.role);
+
+      // Redirect based on role
+      if (data.role === "doctor") {
+        window.location.href = "doctor_dashboard.html";
+      } else {
+        window.location.href = "home.html";  // parent dashboard
+      }
+
+    } catch (err) {
+      alert("Login failed!");
+    }
+  });
+</script>
+
+</body>
+</html>

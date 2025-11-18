@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>History – Smart Baby Skin Care</title>
+  <style>
+    body {background:#eef7ff; font-family: Arial; margin:0; padding:0;}
+    nav {background:#4CAF50; padding:10px; display:flex; justify-content:space-between; align-items:center;}
+    .logo {color:white; font-size:24px; font-weight:bold;}
+    .container {max-width:1000px; margin:30px auto; background:white; padding:20px;
+                border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.2);}
+    h1 {color:#333;}
+    .record-card {display:flex; align-items:center; background:#f9f9f9; margin:10px 0;
+                  padding:10px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1);}
+    .record-card img {width:120px; height:120px; object-fit:cover; border-radius:10px;}
+    .info {margin-left:20px; text-align:left; flex:1;}
+    .btn-consult {background:#ff9800; padding:8px 15px; border:none; border-radius:8px;
+                  color:white; cursor:pointer;}
+    .btn-consult:hover {background:#fb8c00;}
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo" data-en="👶 History" data-kn="👶 ಇತಿಹಾಸ">👶 History</div>
+
+  <select id="languageSwitcher">
+    <option value="en">English</option>
+    <option value="kn">ಕನ್ನಡ</option>
+  </select>
+</nav>
+
+<div class="container">
+  <h1 data-en="Baby Rash History" data-kn="ಮಗುವಿನ ರಾಶ್ ಇತಿಹಾಸ">Baby Rash History</h1>
+
+  <div id="historyList">Loading...</div>
+</div>
+
+<script>
+  const BACKEND_URL = "http://127.0.0.1:5000";
+  const historyContainer = document.getElementById("historyList");
+
+  async function loadHistory() {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      historyContainer.innerHTML = "<p>Please login first.</p>";
+      return;
+    }
+
+    const res = await fetch(`${BACKEND_URL}/api/history/list`, {
+      headers: { "Authorization": "Bearer " + token }
+    });
+
+    const data = await res.json();
+
+    if (!data.length) {
+      historyContainer.innerHTML = "<p>No records found.</p>";
+      return;
+    }
+
+    historyContainer.innerHTML = "";
+
+    data.forEach(rec => {
+      const div = document.createElement("div");
+      div.className = "record-card";
+
+      div.innerHTML = `
+        <img src="${BACKEND_URL}/${rec.image_path}" alt="image">
+        <div class="info">
+          <p><strong data-en="Rash Type:" data-kn="ರಾಶ್ ಪ್ರಕಾರ:">Rash Type:</strong> ${rec.rash_type}</p>
+          <p><strong data-en="Confidence:" data-kn="ವಿಶ್ವಾಸದ ಮಟ್ಟ:">Confidence:</strong> ${rec.confidence}</p>
+          <p><strong data-en="Date:" data-kn="ದಿನಾಂಕ:">Date:</strong> ${rec.created_at}</p>
+        </div>
+        <button class="btn-consult"
+          onclick="consultAgain(${rec.record_id})"
+          data-en="Consult Again" data-kn="ಮತ್ತೆ ಸಲಹೆ ಪಡೆಯಿರಿ">
+          Consult Again
+        </button>
+      `;
+      historyContainer.appendChild(div);
+    });
+  }
+
+  async function consultAgain(record_id) {
+    const token = localStorage.getItem("access_token");
+    if (!token) return alert("Login first!");
+
+    const doctor_id = 2; // Default doctor
+
+    const res = await fetch(`${BACKEND_URL}/api/consultations/request`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({ doctor_id, record_id })
+    });
+
+    const data = await res.json();
+    alert(data.message);
+  }
+
+  // Multi-language
+  const switcher = document.getElementById("languageSwitcher");
+  function setLanguage(lang) {
+    document.querySelectorAll("[data-en]").forEach(el => {
+      el.textContent = el.getAttribute("data-" + lang);
+    });
+    localStorage.setItem("lang", lang);
+  }
+
+  const savedLang = localStorage.getItem("lang") || "en";
+  switcher.value = savedLang;
+  setLanguage(savedLang);
+  switcher.addEventListener("change", () => setLanguage(switcher.value));
+
+  loadHistory();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doctor Consultation</title>
+
+  <style>
+    body {background: #eaf7ff; margin: 0; font-family: Arial;}
+    nav {background: #4CAF50; color: white; padding: 10px 20px; display: flex; justify-content: space-between;}
+    .container {max-width: 700px; background: white; margin: 40px auto; padding: 20px; border-radius: 12px;}
+
+    h1 {text-align: center; color: #333;}
+    .record-box img {width: 100%; border-radius: 10px;}
+
+    .form-group {margin-top: 15px;}
+    label {font-weight: bold;}
+    textarea, input {width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-top: 5px;}
+
+    button {background: #4CAF50; color: white; padding: 10px 15px; border: none;
+            border-radius: 10px; margin-top: 20px; font-size: 18px; width: 100%; cursor: pointer;}
+    button:hover {background: #45a049;}
+  </style>
+</head>
+
+<body>
+
+<nav>
+  <div class="logo" data-en="Doctor Consultation" data-kn="ಡಾಕ್ಟರ್ ಸಲಹೆ">Doctor Consultation</div>
+
+  <select id="languageSwitcher">
+    <option value="en">English</option>
+    <option value="kn">ಕನ್ನಡ</option>
+  </select>
+</nav>
+
+<div class="container">
+  <h1 data-en="Consult a Pediatric Doctor" data-kn="ಮಕ್ಕಳ ವೈದ್ಯರನ್ನು ಸಂಪರ್ಕಿಸಿ">
+    Consult a Pediatric Doctor
+  </h1>
+
+  <!-- Rash Details -->
+  <div id="recordBox" class="record-box"></div>
+
+  <!-- Consultation Form -->
+  <div class="form-group">
+    <label data-en="Describe baby's symptoms (optional)" data-kn="ಮಗುವಿನ ಲಕ್ಷಣಗಳನ್ನು ವಿವರಿಸಿ (ಐಚ್ಛಿಕ)">
+      Describe baby's symptoms (optional)
+    </label>
+    <textarea id="message" rows="4"></textarea>
+  </div>
+
+  <div class="form-group">
+    <label data-en="Preferred Time (optional)" data-kn="ಆಪ್ಷನ್ ಸಮಯ (ಐಚ್ಛಿಕ)">
+      Preferred Time (optional)
+    </label>
+    <input type="text" id="preferredTime" placeholder="e.g. Tomorrow 5 PM">
+  </div>
+
+  <button id="requestBtn"
+    data-en="Send Consultation Request"
+    data-kn="ಸಲಹೆ ಕೋರಿಕೆಯನ್ನು ಕಳುಹಿಸಿ">
+    Send Consultation Request
+  </button>
+</div>
+
+<script>
+  const BACKEND = "http://127.0.0.1:5000";
+
+  // LANGUAGE
+  const switcher = document.getElementById("languageSwitcher");
+  const saved = localStorage.getItem("lang") || "en";
+  switcher.value = saved;
+  setLang(saved);
+  switcher.addEventListener("change", () => setLang(switcher.value));
+
+  function setLang(lang) {
+    document.querySelectorAll("[data-en]").forEach(el => {
+      el.textContent = el.getAttribute(`data-${lang}`);
+    });
+    localStorage.setItem("lang", lang);
+  }
+
+  // LOAD RECORD DETAILS
+  const params = new URLSearchParams(window.location.search);
+  const recordID = params.get("record_id");
+
+  async function loadRecord() {
+    const token = localStorage.getItem("access_token");
+    const res = await fetch(`${BACKEND}/api/history/record/${recordID}`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    const data = await res.json();
+
+    document.getElementById("recordBox").innerHTML = `
+      <img src="${data.image_url}">
+      <p><strong>Rash:</strong> ${data.rash_type}</p>
+      <p><strong>Confidence:</strong> ${data.confidence}</p>
+      <p><strong>Date:</strong> ${data.created_at}</p>
+    `;
+  }
+  loadRecord();
+
+  // SEND CONSULTATION REQUEST
+  document.getElementById("requestBtn").onclick = async () => {
+    const token = localStorage.getItem("access_token");
+
+    const res = await fetch(`${BACKEND}/api/consult/request`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        record_id: recordID,
+        message: document.getElementById("message").value,
+        preferred_time: document.getElementById("preferredTime").value
+      })
+    });
+
+    const data = await res.json();
+    alert(data.message);
+  };
+</script>
+
+</body>
+</html>

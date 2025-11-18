@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Consultation Status</title>
+
+  <style>
+    body {background: #eaf7ff; margin: 0; font-family: Arial;}
+    nav {background: #4CAF50; color: white; padding: 10px 20px; display: flex; justify-content: space-between;}
+
+    .container {
+      max-width: 900px;
+      background: white;
+      margin: 30px auto;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    h1 {text-align: center; color: #2c3e50;}
+
+    .status-card {
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .status {
+      font-weight: bold;
+      padding: 5px 10px;
+      border-radius: 6px;
+      text-transform: capitalize;
+    }
+
+    .pending {background: #f1c40f; color: white;}
+    .accepted {background: #2ecc71; color: white;}
+    .rejected {background: #e74c3c; color: white;}
+
+    .info {margin-top: 10px; font-size: 15px;}
+  </style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<nav>
+  <span data-en="Consultation Status" data-kn="ಸಲಹೆ ಸ್ಥಿತಿ">Consultation Status</span>
+
+  <select id="languageSwitcher">
+    <option value="en">English</option>
+    <option value="kn">ಕನ್ನಡ</option>
+  </select>
+</nav>
+
+<div class="container">
+  <h1 data-en="Your Consultation Requests" data-kn="ನಿಮ್ಮ ಸಲಹೆ ಕೋರಿಕೆಗಳು">
+    Your Consultation Requests
+  </h1>
+
+  <div id="statusList">Loading...</div>
+</div>
+
+<script>
+  const BACKEND = "http://127.0.0.1:5000";
+
+  // ---------------------------
+  // MULTI LANGUAGE
+  // ---------------------------
+  const switcher = document.getElementById("languageSwitcher");
+  const saved = localStorage.getItem("lang") || "en";
+  switcher.value = saved;
+  setLanguage(saved);
+
+  switcher.addEventListener("change", () => setLanguage(switcher.value));
+
+  function setLanguage(lang) {
+    document.querySelectorAll("[data-en]").forEach(el => {
+      el.textContent = el.getAttribute("data-" + lang);
+    });
+    localStorage.setItem("lang", lang);
+  }
+
+  // ---------------------------
+  // LOAD PARENT CONSULTATION STATUS
+  // ---------------------------
+  async function loadStatus() {
+    const token = localStorage.getItem("access_token");
+    const container = document.getElementById("statusList");
+
+    try {
+      const res = await fetch(`${BACKEND}/api/consultations/parent`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+
+      const data = await res.json();
+
+      if (!Array.isArray(data) || data.length === 0) {
+        container.innerHTML = `
+          <p data-en="No consultation requests yet." 
+             data-kn="ಇನ್ನೂ ಸಲಹೆ ಕೋರಿಕೆಗಳಿಲ್ಲ.">
+             No consultation requests yet.
+          </p>`;
+        return;
+      }
+
+      container.innerHTML = "";
+
+      data.forEach(req => {
+        const card = document.createElement("div");
+        card.classList.add("status-card");
+
+        card.innerHTML = `
+          <div class="status-row">
+            <div>
+              <p><strong data-en="Doctor:" data-kn="ಡಾಕ್ಟರ್:">Doctor:</strong> ${req.doctor_name}</p>
+            </div>
+            <span class="status ${req.status}">
+              ${req.status}
+            </span>
+          </div>
+
+          <div class="info">
+            <p><strong data-en="Requested At:" data-kn="ಕೋರಿಕೆಯ ದಿನಾಂಕ:">Requested At:</strong> ${req.requested_at}</p>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+
+    } catch (err) {
+      container.innerHTML = `<p>Error loading data.</p>`;
+    }
+  }
+
+  loadStatus();
+</script>
+
+</body>
+</html>
