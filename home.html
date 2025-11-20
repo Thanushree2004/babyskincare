@@ -4,121 +4,157 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Home - Smart Baby Skin Scanner</title>
-  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/4762/4762967.png" type="image/png">
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/4762/4762967.png">
+
   <style>
     body {
-      background: url('background.png') no-repeat center center;
+      background: url('background.png') no-repeat center center fixed;
       background-size: cover;
       font-family: Arial, sans-serif;
       margin: 0;
       text-align: center;
-      height: 100vh;
+      min-height: 100vh;
     }
+
+    /* NAVBAR */
     nav {
-      background-color: #4CAF50;
-      padding: 10px 20px;
+      background-color: rgba(76, 175, 80, 0.95);
+      padding: 12px 30px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      position: relative;
     }
+
     .logo {
       color: white;
-      font-size: 24px;
+      font-size: 26px;
       font-weight: bold;
     }
-    .menu-icon {
-      font-size: 24px;
-      color: white;
-      cursor: pointer;
+
+    .nav-links {
+      list-style: none;
+      display: flex;
+      gap: 25px;
+      margin: 0;
+      padding: 0;
     }
-    .menu-items {
-      display: none;
-      flex-direction: column;
-      position: absolute;
-      top: 50px;
-      left: 0;
-      background-color: #4CAF50;
-      width: 100%;
-      padding: 10px 0;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-    .menu-items li {
-      margin: 10px 0;
-      text-align: center;
-    }
-    .menu-items li a {
+
+    .nav-links li a {
       color: white;
       text-decoration: none;
       font-size: 18px;
       font-weight: bold;
     }
-    .menu-items li a:hover {
+
+    .nav-links li a:hover {
       text-decoration: underline;
+    }
+
+    .logout-btn {
+      background: white;
+      color: #4CAF50;
+      font-weight: bold;
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .logout-btn:hover {
+      background: #e8e8e8;
+    }
+
+    /* HERO TEXT ONLY */
+    .hero {
+      margin-top: 100px;
+      padding: 40px 20px;
+      background: rgba(255, 255, 255, 0.85);
+      width: 90%;
+      max-width: 600px;
+      border-radius: 15px;
+      margin-left: auto;
+      margin-right: auto;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .hero h1 {
+      color: #4CAF50;
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
+
+    .hero p {
+      color: #444;
+      font-size: 18px;
+      line-height: 1.6;
     }
   </style>
 </head>
+
 <body>
 
-<!-- Navbar Start -->
-<nav>
-  <div class="logo" data-en="👶 Baby Skin Care" data-kn="👶 ಬೇಬಿ ಸ್ಕಿನ್ ಕೇರ್">👶 Baby Skin Care</div>
-  <div class="menu-icon" id="menuIcon">☰</div>
-  <ul class="menu-items" id="menuItems">
-    <li><a href="home.html" data-en="Home" data-kn="ಮುಖಪುಟ">Home</a></li>
-    <li><a href="upload.html" data-en="Upload" data-kn="ಅಪ್ಲೋಡ್">Upload</a></li>
-    <li><a href="about.html" data-en="About" data-kn="ಕಂಪನಿ ಬಗ್ಗೆ">About</a></li>
-    <li><a href="contact_help.html" data-en="Contact Us & Help" data-kn="ಸಂಪರ್ಕಿಸಿ ಮತ್ತು ಸಹಾಯ">Contact Us & Help</a></li>
-  </ul>
-  <!-- Language Switcher -->
-  <select id="languageSwitcher">
-    <option value="en">English</option>
-    <option value="kn">ಕನ್ನಡ</option>
-  </select>
-</nav>
-<!-- Navbar End -->
+  <!-- NAVBAR -->
+  <nav>
+    <div class="logo">👶 Baby Skin Care</div>
 
-<section>
-  <h1 data-en="👶 Smart Baby Skin Scanner" data-kn="👶 ಸ್ಮಾರ್ಟ್ ಬೇಬಿ ಸ್ಕಿನ್ ಸ್ಕ್ಯಾನರ್">
-    👶 Smart Baby Skin Scanner
-  </h1>
-  <p data-en="Upload a photo of your baby's skin to detect rash type and receive care tips!"
-     data-kn="ನಿಮ್ಮ ಮಗುವಿನ ಚರ್ಮದ ಫೋಟೋವನ್ನು ಅಪ್ಲೋಡ್ ಮಾಡಿ, ರಾಶಿ ಪ್ರಕಾರವನ್ನು ಪತ್ತೆಹಚ್ಚಿ ಮತ್ತು ಕಾಳಜಿ ಸಲಹೆಗಳನ್ನು ಪಡೆಯಿರಿ!">
-     Upload a photo of your baby's skin to detect rash type and receive care tips!
-  </p>
-</section>
+    <ul class="nav-links">
+      <li><a href="home.html">Home</a></li>
+      <li><a href="upload.html">Upload</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact_help.html">Contact & Help</a></li>
+      <li><a href="#" onclick="openDashboard()">Dashboard →</a></li>
+    </ul>
 
-<script>
-  // Navbar toggle
-  const menuIcon = document.getElementById('menuIcon');
-  const menuItems = document.getElementById('menuItems');
-  menuIcon.addEventListener('click', function () {
-    menuItems.style.display = menuItems.style.display === 'block' ? 'none' : 'block';
-  });
+    <button class="logout-btn" onclick="logout()">Logout</button>
 
-  // ✅ Language Switcher
-  const switcher = document.getElementById("languageSwitcher");
-  function setLanguage(lang) {
-    // normal text
-    document.querySelectorAll("[data-en]").forEach(el => {
-      el.textContent = el.getAttribute("data-" + lang);
+    <select id="languageSwitcher" style="margin-left: 15px;">
+      <option value="en">English</option>
+      <option value="kn">ಕನ್ನಡ</option>
+    </select>
+  </nav>
+
+  <!-- HERO SECTION ONLY -->
+  <div class="hero">
+    <h1>Welcome to Smart Baby Skin Scanner</h1>
+    <p>
+      An AI-powered solution for early detection of baby skin conditions.  
+      Analyze, predict, and consult — all in one place.
+    </p>
+  </div>
+
+  <!-- JS -->
+  <script>
+    function openDashboard() {
+      const role = localStorage.getItem("role");
+      if (role === "parent") {
+        window.location.href = "parent_dashboard.html";
+      } else if (role === "doctor") {
+        window.location.href = "doctor_dashboard.html";
+      } else {
+        alert("Please login first!");
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+      window.location.href = "login.html";
+    }
+
+    if (!localStorage.getItem("token")) {
+      window.location.href = "login.html";
+    }
+
+    const switcher = document.getElementById("languageSwitcher");
+    switcher.addEventListener("change", () => {
+      localStorage.setItem("lang", switcher.value);
+      location.reload();
     });
-    // placeholders if any
-    document.querySelectorAll("[data-en-placeholder]").forEach(el => {
-      el.placeholder = el.getAttribute("data-" + lang + "-placeholder");
-    });
-    localStorage.setItem("lang", lang);
-  }
 
-  // Load saved language
-  const savedLang = localStorage.getItem("lang") || "en";
-  switcher.value = savedLang;
-  setLanguage(savedLang);
-
-  switcher.addEventListener("change", () => {
-    setLanguage(switcher.value);
-  });
-</script>
+    const savedLang = localStorage.getItem("lang") || "en";
+    switcher.value = savedLang;
+  </script>
 
 </body>
 </html>

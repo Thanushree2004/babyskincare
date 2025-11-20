@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Doctor - Smart Baby Care</title>
+
+    <style>
+        body {background: #eaf7ff; font-family: Arial; margin: 0; padding: 0;}
+        nav {background: #4CAF50; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center;}
+        .logo {color: white; font-size: 24px; font-weight: bold;}
+        .container {max-width: 900px; margin: 40px auto; background: white; padding: 20px; border-radius: 10px; 
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.1);}
+
+        h1 {text-align: center; color: #333;}
+        .doctor-grid {display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;}
+
+        .doctor-card {
+            width: 260px;
+            background: #fff;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .doctor-card img {
+            width: 100px; height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .doctor-name {font-size: 18px; margin-top: 10px; font-weight: bold;}
+        .doctor-role {font-size: 14px; color: #555;}
+
+        .select-btn {
+            margin-top: 10px; padding: 8px 12px;
+            background: #4CAF50; color: white;
+            border: none; border-radius: 6px; cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav>
+    <div class="logo">👨‍⚕️ Select Doctor</div>
+</nav>
+
+<div class="container">
+    <h1>Select a Doctor</h1>
+
+    <div id="doctorContainer" class="doctor-grid"></div>
+</div>
+
+<script>
+    const BACKEND_URL = "http://127.0.0.1:5000";
+    const recordID = localStorage.getItem("selected_record_id");  // comes from history page click
+
+    async function loadDoctors() {
+        const token = localStorage.getItem("access_token");
+
+        const res = await fetch(`${BACKEND_URL}/api/doctors`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        const data = await res.json();
+        const container = document.getElementById("doctorContainer");
+
+        container.innerHTML = "";
+
+        data.doctors.forEach(doc => {
+            const card = document.createElement("div");
+            card.className = "doctor-card";
+
+            card.innerHTML = `
+                <img src="${doc.profile_pic || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'}" />
+                <div class="doctor-name">${doc.full_name}</div>
+                <div class="doctor-role">${doc.email}</div>
+                <button class="select-btn" onclick="selectDoctor(${doc.id})">Select</button>
+            `;
+
+            container.appendChild(card);
+        });
+    }
+
+    async function selectDoctor(doctorID) {
+        const token = localStorage.getItem("access_token");
+
+        const res = await fetch(`${BACKEND_URL}/api/consultations/request`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                doctor_id: doctorID,
+                record_id: recordID
+            })
+        });
+
+        const data = await res.json();
+        alert(data.message);
+
+        window.location.href = "consultation_status.html";
+    }
+
+    loadDoctors();
+</script>
+
+</body>
+<script src="script.js"></script>
+
+</html>

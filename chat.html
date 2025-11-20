@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Parent — Chat with Doctor</title>
+
+  <style>
+    :root{
+      --accent:#4CAF50;
+      --muted:#777;
+      --bg:#f2fbff;
+      --card:#fff;
+    }
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:#222}
+    nav{background:var(--accent);color:white;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+    .logo{font-weight:700}
+    main{max-width:980px;margin:24px auto;padding:16px}
+    .panel{background:var(--card);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.06);padding:12px}
+    .controls{display:flex;gap:8px;align-items:center}
+    input[type="text"], select, textarea{padding:10px;border-radius:8px;border:1px solid #ddd;font-size:14px}
+    button{background:var(--accent);color:white;border:none;padding:10px 14px;border-radius:8px;cursor:pointer}
+    button[disabled]{opacity:.6;cursor:default}
+    .chat-wrap{display:flex;gap:16px;margin-top:14px}
+    .left{width:290px}
+    .convo-list{max-height:520px;overflow:auto;padding:8px;display:flex;flex-direction:column;gap:8px}
+    .convo-item{padding:8px;border-radius:8px;background:#fafafa;border:1px solid #eee;cursor:pointer}
+    .convo-item.active{background:#e8fff0;border-color:#cfeee0}
+    .right{flex:1;display:flex;flex-direction:column;height:560px}
+    .messages{flex:1;padding:12px;overflow:auto;border-radius:8px;background:#fcfeff;border:1px solid #f0f6f6}
+    .msg{max-width:70%;margin:6px 0;padding:10px;border-radius:12px;line-height:1.3}
+    .msg.me{margin-left:auto;background:linear-gradient(180deg,#dfffe6,#baf5c7);border:1px solid #c8f0cb}
+    .msg.them{margin-right:auto;background:white;border:1px solid #eee}
+    .meta{font-size:12px;color:var(--muted);margin-top:6px}
+    .composer{display:flex;gap:8px;padding-top:10px}
+    .small{font-size:13px;color:var(--muted)}
+    .hint{font-size:13px;color:#a33;margin-top:8px}
+    .lang-switch{background:transparent;border:0;color:white;cursor:pointer;font-weight:700}
+    @media(max-width:880px){
+      .chat-wrap{flex-direction:column}
+      .left{width:100%}
+      .right{height:420px}
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo" data-en="Smart Baby - Chat" data-kn="ಸ್ಮಾರ್ಟ್ ಬೇಬಿ - ಚಾಟ್">Smart Baby - Chat</div>
+  <div>
+    <button class="lang-switch" id="toggleLang">KN</button>
+  </div>
+</nav>
+
+<main>
+  <div class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <strong data-en="Chat with your doctor" data-kn="ನಿಮ್ಮ ಡಾಕ್ಟರ್‌ ಜೊತೆ ಚಾಟ್">Chat with your doctor</strong>
+        <div class="small" data-en="Use your registered account. JWT token must be in localStorage as 'access_token'." data-kn="ನಿಮ್ಮ ನೋಂದಾಯಿತ ಖಾತೆಯನ್ನು ಬಳಸಿ. JWT ಟೋಕನ್ localStorage ನಲ್ಲಿ 'access_token' ಎಂಬ ಹೆಸರಿನಲ್ಲಿ ಇರಬೇಕು.">
+          Use your registered account. JWT token must be in localStorage as 'access_token'.
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="doctorSelect" style="min-width:160px">
+          <option value="">-- Select doctor (or enter id) --</option>
+          <!-- Example static options; replace or populate from API if you have one -->
+          <option value="2">Dr. Priya (ID 2)</option>
+          <option value="3">Dr. Anand (ID 3)</option>
+        </select>
+        <input type="text" id="doctorIdInput" placeholder="Or enter doctor id" style="width:120px" />
+        <button id="startBtn">Start Chat</button>
+      </div>
+    </div>
+
+    <div class="chat-wrap">
+      <div class="left">
+        <div style="margin-top:10px;font-weight:700">Conversations</div>
+        <div class="convo-list panel" id="convoList" style="margin-top:8px"></div>
+      </div>
+
+      <div class="right">
+        <div class="messages" id="messages">
+          <div class="small" id="noConv" style="text-align:center;margin-top:32px">No conversation selected.</div>
+        </div>
+
+        <div class="composer">
+          <textarea id="msgInput" rows="2" placeholder="Type your message..." style="flex:1"></textarea>
+          <button id="sendBtn">Send</button>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;margin-top:8px">
+          <div class="small" data-en="Auto-refresh every 3s" data-kn="ಪ್ರತಿ 3 ಸೆಕೆಂಡಿಗೆ ಸ್ವಯಂ ರಿಫ್ರೆಶ್">Auto-refresh every 3s</div>
+          <div class="small" id="statusText"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hint" id="hint" style="display:none"></div>
+</main>
+
+<script>
+  // --------------------------
+  // Configuration
+  // --------------------------
+  const BACKEND = location.origin === "null" ? "http://127.0.0.1:5000" : "http://127.0.0.1:5000"; // adjust if backend URL differs
+  const POLL_INTERVAL_MS = 3000;
+
+  // --------------------------
+  // i18n (English + Kannada)
+  // --------------------------
+  const LANG_KEY = 'lang';
+  const DEFAULT_LANG = localStorage.getItem(LANG_KEY) || 'en';
+  const strings = {
+    en: {
+      noConversation: "No conversation selected.",
+      tokenMissing: "Access token not found. Please login first.",
+      starting: "Starting chat...",
+      started: "Conversation opened",
+      sending: "Sending...",
+      sent: "Message sent",
+      error: "Error:",
+      unauthorized: "Unauthorized — check token.",
+      selectDoctor: "Please select or enter a doctor id.",
+      emptyMessage: "Message cannot be empty."
+    },
+    kn: {
+      noConversation: "ಯಾವುದೇ ಸಂಭಾಷಣೆ ಆಯ್ಕೆ ಮಾಡಿಲ್ಲ.",
+      tokenMissing: "ಪ್ರವೇಶ ಟೋಕನ್ ಸಿಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮೊದಲಿಗೆ ಲಾಗಿನ್ ಮಾಡಿ.",
+      starting: "ಚಾಟ್ ಆರಂಭಿಸಲಾಗುತ್ತಿದೆ...",
+      started: "ಸಂಭಾಷಣೆ ತೆರೆಯಲಾಯಿತು",
+      sending: "ಕಳುಹಿಸಲಾಗುತ್ತಿದೆ...",
+      sent: "ಸಂದೇಶ ಕಳುಹಿಸಲಾಗಿದೆ",
+      error: "ದೋಷ:",
+      unauthorized: "ಅನಧಿಕೃತ - ಟೋಕನ್ ಪರಿಶೀಲಿಸಿ.",
+      selectDoctor: "ದಯವಿಟ್ಟು ಡಾಕ್ಟರ್ ಐಡಿ ಆಯ್ಕೆಮಾಡಿ ಅಥವಾ ನಮೂದಿಸಿ.",
+      emptyMessage: "ಸಂದೇಶ ಖಾಲಿ ಇರಬಾರದು."
+    }
+  };
+
+  let LANG = DEFAULT_LANG;
+
+  function t(k){ return strings[LANG][k] || k }
+
+  // --------------------------
+  // State
+  // --------------------------
+  let currentConversationId = null;
+  let pollTimer = null;
+  let conversations = []; // local list of opened conversations
+
+  // --------------------------
+  // Helpers
+  // --------------------------
+  function authHeaders(){
+    const token = localStorage.getItem('access_token');
+    return token ? { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" } : null;
+  }
+
+  function setStatus(msg){ document.getElementById('statusText').textContent = msg || ''; }
+
+  function showHint(msg){ const h = document.getElementById('hint'); h.style.display = msg ? 'block' : 'none'; h.textContent = msg || ''; }
+
+  // --------------------------
+  // UI wiring
+  // --------------------------
+  document.getElementById('toggleLang').textContent = LANG === 'en' ? 'KN' : 'EN';
+  document.getElementById('toggleLang').addEventListener('click', () => {
+    LANG = LANG === 'en' ? 'kn' : 'en';
+    localStorage.setItem(LANG_KEY, LANG);
+    document.querySelectorAll('[data-en]').forEach(el => {
+      const key = el.getAttribute('data-en');
+      // use the element's data-* attributes set in the template
+      el.textContent = el.getAttribute(`data-${LANG}`);
+    });
+    document.getElementById('toggleLang').textContent = LANG === 'en' ? 'KN' : 'EN';
+    renderMessages(); // update any empty ui strings
+  });
+
+  // set initial i18n content
+  document.querySelectorAll('[data-en]').forEach(el=>{
+    el.textContent = el.getAttribute(`data-${LANG}`);
+  });
+
+  // doctor selection helper
+  document.getElementById('doctorSelect').addEventListener('change', (e)=>{
+    document.getElementById('doctorIdInput').value = e.target.value;
+  });
+
+  document.getElementById('startBtn').addEventListener('click', startChatForDoctor);
+  document.getElementById('sendBtn').addEventListener('click', sendMessage);
+  document.getElementById('msgInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+
+  // --------------------------
+  // Core flows
+  // --------------------------
+  async function startChatForDoctor(){
+    const doctorId = (document.getElementById('doctorIdInput').value || '').trim();
+    if (!doctorId) return showHint(t('selectDoctor'));
+
+    const headers = authHeaders();
+    if (!headers) { showHint(t('tokenMissing')); return; }
+
+    showHint(t('starting'));
+    setStatus('');
+
+    try {
+      const resp = await fetch(`${BACKEND}/api/chat/start`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ doctor_id: parseInt(doctorId,10) })
+      });
+
+      const data = await resp.json();
+      if (!resp.ok) {
+        showHint((data && data.error) ? `${t('error')} ${data.error}` : t('error'));
+        return;
+      }
+
+      const convoId = data.conversation_id;
+      addOrSelectConversation(convoId, doctorId);
+      showHint(t('started'));
+      startPolling();
+    } catch (err) {
+      showHint(t('error') + ' ' + err.message);
+    }
+  }
+
+  async function sendMessage(){
+    const text = document.getElementById('msgInput').value.trim();
+    if (!text) { showHint(t('emptyMessage')); return; }
+
+    if (!currentConversationId) { showHint(t('selectDoctor')); return; }
+
+    const headers = authHeaders();
+    if (!headers) { showHint(t('tokenMissing')); return; }
+
+    setStatus(t('sending'));
+    try {
+      const resp = await fetch(`${BACKEND}/api/chat/send`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ conversation_id: currentConversationId, message: text })
+      });
+
+      const data = await resp.json();
+      if (!resp.ok) {
+        showHint((data && data.error) ? `${t('error')} ${data.error}` : t('error'));
+        setStatus('');
+        return;
+      }
+
+      document.getElementById('msgInput').value = '';
+      setStatus(t('sent'));
+      // immediately refresh messages
+      await loadMessages(currentConversationId);
+    } catch (err) {
+      showHint(t('error') + ' ' + err.message);
+    } finally {
+      setTimeout(()=>setStatus(''), 1200);
+    }
+  }
+
+  // fetch messages for a conversation id and render
+  async function loadMessages(conversationId){
+    const headers = authHeaders();
+    if (!headers) { showHint(t('tokenMissing')); return; }
+
+    try {
+      const resp = await fetch(`${BACKEND}/api/chat/messages/${conversationId}`, {
+        method: 'GET',
+        headers: { "Authorization": headers.Authorization }
+      });
+
+      if (resp.status === 401 || resp.status === 403) {
+        showHint(t('unauthorized'));
+        return;
+      }
+
+      const data = await resp.json();
+      if (!resp.ok) {
+        showHint((data && data.error) ? `${t('error')} ${data.error}` : t('error'));
+        return;
+      }
+
+      // render messages
+      renderMessagesList(data.messages || []);
+    } catch (err) {
+      console.error(err);
+      showHint(t('error') + ' ' + err.message);
+    }
+  }
+
+  // --------------------------
+  // Conversations list UI
+  // --------------------------
+  function addOrSelectConversation(conversationId, doctorId){
+    // add locally if not present
+    if (!conversations.find(c=>c.id === conversationId)) {
+      conversations.unshift({ id: conversationId, doctor_id: doctorId || '' });
+    }
+    // set active
+    currentConversationId = conversationId;
+    renderConversations();
+    // load messages for selected convo
+    loadMessages(conversationId);
+  }
+
+  function renderConversations(){
+    const el = document.getElementById('convoList');
+    el.innerHTML = '';
+    if (conversations.length === 0){
+      el.innerHTML = `<div class="small" style="padding:8px;color:${getComputedStyle(document.body).color}">No conversations yet.</div>`;
+      return;
+    }
+    conversations.forEach(c=>{
+      const d = document.createElement('div');
+      d.className = 'convo-item' + (c.id === currentConversationId ? ' active' : '');
+      d.innerHTML = `<div><strong>Doctor ID:</strong> ${c.doctor_id}</div><div class="small">Conversation: ${c.id}</div>`;
+      d.onclick = ()=>{ currentConversationId = c.id; renderConversations(); loadMessages(c.id); };
+      el.appendChild(d);
+    });
+  }
+
+  // --------------------------
+  // Render messages UI
+  // --------------------------
+  function renderMessagesList(msgs){
+    const container = document.getElementById('messages');
+    container.innerHTML = '';
+    if (!msgs || msgs.length === 0){
+      container.innerHTML = `<div class="small" style="text-align:center;margin-top:40px">${t('noConversation')}</div>`;
+      return;
+    }
+
+    const meId = (() => {
+      // attempt to decode JWT (not required) — we can rely on server to tell sender_id in messages
+      return null;
+    })();
+
+    msgs.forEach(m=>{
+      const div = document.createElement('div');
+      div.className = 'msg ' + (isSenderMe(m.sender_id) ? 'me' : 'them');
+      div.innerHTML = `<div>${escapeHtml(m.message)}</div>
+                       <div class="meta">${escapeHtml(m.sender_id+'')} • ${escapeHtml(m.created_at)}</div>`;
+      container.appendChild(div);
+    });
+
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function renderMessages(){
+    if (!currentConversationId) {
+      document.getElementById('messages').innerHTML = `<div class="small" style="text-align:center;margin-top:40px">${t('noConversation')}</div>`;
+    }
+  }
+
+  function isSenderMe(senderId){
+    // compare against jwt identity if available
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) return false;
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return parseInt(payload.sub || payload.identity || payload.user_id || payload.user || payload.id || 0) === parseInt(senderId);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function escapeHtml(s){ if(!s) return ''; return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;') }
+
+  // --------------------------
+  // Polling loop
+  // --------------------------
+  function startPolling(){
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(()=>{
+      if (currentConversationId) loadMessages(currentConversationId);
+    }, POLL_INTERVAL_MS);
+  }
+
+  function stopPolling(){ if (pollTimer) clearInterval(pollTimer); pollTimer = null; }
+
+  // --------------------------
+  // Init: try load any conversations from localStorage
+  // --------------------------
+  (function init(){
+    // restore known conversations
+    try {
+      const stored = JSON.parse(localStorage.getItem('conversations') || '[]');
+      if (Array.isArray(stored) && stored.length) {
+        conversations = stored;
+        currentConversationId = conversations[0].id || null;
+      }
+    } catch(e){ conversations = [] }
+
+    renderConversations();
+    renderMessages();
+
+    // save conversations on unload
+    window.addEventListener('beforeunload', ()=> localStorage.setItem('conversations', JSON.stringify(conversations)));
+
+    // start polling if a conversation exists
+    if (currentConversationId) startPolling();
+  })();
+
+</script>
+</body>
+<script src="script.js"></script>
+
+</html>

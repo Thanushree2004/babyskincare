@@ -1,7 +1,7 @@
-from app import app
+from app import create_app
 from extensions import db, migrate
 
-# Bind Flask-Migrate explicitly so CLI commands like "flask db init" work
+app = create_app()
 migrate.init_app(app, db)
 
 if __name__ == "__main__":

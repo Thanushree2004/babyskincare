@@ -1,300 +1,744 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Parent Dashboard</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title data-en="Parent Dashboard" data-kn="ಪೋಷಕರ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್">Parent Dashboard</title>
 
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f6fbff;
+    :root{
+      --primary:#1166ee;
+      --accent:#4CAF50;
+      --bg:#f6fbff;
+      --card:#fff;
+      --muted:#6b7280;
+      --shadow: 0 8px 24px rgba(15,23,42,0.06);
+      --radius:12px;
+    }
+    *{box-sizing:border-box}
+    body{ margin:0; font-family:Inter, Arial, sans-serif; background:var(--bg); color:#111827; }
+
+    /* Topbar */
+    .topbar{ height:68px; display:flex; align-items:center; gap:16px; padding:0 20px; background:#fff; box-shadow:var(--shadow); position:sticky; top:0; z-index:90; }
+    .brand{ display:flex; gap:12px; align-items:center; font-weight:700;}
+    .logo{ width:46px; height:46px; border-radius:10px; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; box-shadow:0 3px 8px rgba(0,0,0,0.08); }
+    .top-actions{ margin-left:auto; display:flex; gap:12px; align-items:center;}
+
+    .btn{ background:var(--primary); color:white; border:none; padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600; }
+    .btn.ghost{ background:#fff; color:#111; border:1px solid #e6e9ef; box-shadow:none; }
+    .btn.secondary{ background:#10b981; }
+
+    /* Layout */
+    .layout{ display:flex; gap:24px; padding:26px; max-width:1200px; margin:20px auto; align-items:flex-start; }
+
+    /* Sidebar */
+    .sidebar{ width:260px; background:var(--card); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow); position:sticky; top:88px; height:calc(100vh - 120px); display:flex; flex-direction:column; gap:12px; }
+    .sidebar .menu-title{ font-weight:700; color:#0f1724; margin-bottom:6px; }
+    .nav-item{ display:flex; gap:12px; align-items:center; padding:10px; border-radius:10px; color:#374151; cursor:pointer; text-decoration:none; }
+    .nav-item:hover{ background:#f3f6ff; color:var(--primary); }
+    .nav-item.active{ background:#eaf2ff; color:var(--primary); font-weight:700; }
+    .small-muted{ font-size:13px; color:var(--muted); }
+
+    /* Main */
+    .main{ flex:1; display:flex; flex-direction:column; gap:18px; min-height:60vh; }
+    .card{ background:var(--card); padding:18px; border-radius:12px; box-shadow:var(--shadow); }
+    .card.row{ display:flex; gap:18px; flex-wrap:wrap; }
+    .card.small{ flex:0 0 220px; display:flex; flex-direction:column; gap:8px; justify-content:center; }
+    .muted{ color:var(--muted); font-size:13px; }
+
+    /* baby list / history */
+    .baby-list{ display:flex; flex-direction:column; gap:10px; margin-top:8px; }
+    .baby-row{ display:flex; justify-content:space-between; align-items:center; padding:12px; border-radius:10px; background:#fbfdff; border:1px solid #f1f5f9; }
+    .baby-row .meta{ font-size:13px; color:var(--muted); }
+
+    /* doctors list */
+    .doctor-card{ display:flex; gap:12px; align-items:center; padding:12px; border-radius:10px; border:1px solid #eef3ff; background:#fff; }
+    .doctor-photo{ width:56px; height:56px; border-radius:8px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; font-weight:700; color:#334155; }
+
+    /* status pill (used in consult list) */
+    .status-pill { padding:6px 10px; border-radius:999px; font-weight:700; color:#fff; display:inline-block; }
+    .status-pill.pending { background:#f39c12; }
+    .status-pill.accepted { background:#10b981; }
+    .status-pill.rejected { background:#ef4444; }
+
+    /* responsive */
+    @media (max-width:960px){
+      .layout{ padding:12px; margin:12px; flex-direction:column; max-width:960px; }
+      .sidebar{ width:100%; height:auto; position:relative; top:0; flex-direction:row; align-items:center; overflow:auto; padding:12px; gap:8px; }
+      .sidebar .menu-title{ display:none; }
+      .card.small{ flex:1 1 48%; }
     }
 
-    nav {
-      background: #4CAF50;
-      color: white;
-      padding: 15px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 18px;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: 20px auto;
-      padding: 20px;
-    }
-
-    h2 {
-      color: #333;
-      text-align: center;
-    }
-
-    .card {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-    }
-
-    button {
-      background: #4CAF50;
-      color: white;
-      padding: 10px 14px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-
-    button:hover {
-      background: #45a049;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin-top: 8px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-
-    .baby-list {
-      margin-top: 10px;
-    }
-
-    .baby-item {
-      padding: 12px;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
-      margin-bottom: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .logout {
-      background: red;
-    }
-
+    /* Chat floating button */
+    .chat-fab{ position:fixed; right:18px; bottom:18px; width:56px; height:56px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 20px rgba(17,102,238,0.18); cursor:pointer; z-index:200; }
+    .chat-fab[hidden]{ display:none; }
   </style>
 </head>
-
 <body>
 
-<!-- NAVBAR -->
-<nav>
-  <span data-en="Parent Dashboard" data-kn="ಪೋಷಕರ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್">Parent Dashboard</span>
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">👶</div>
+      <div>
+        <div style="font-size:14px" data-en="Smart Baby Skin Scanner" data-kn="ಸ್ಮಾರ್ಟ್ ಬೇಬಿ ಸ್ಕಿನ್ ಸ್ಕ್ಯಾನರ್">Smart Baby Skin Scanner</div>
+        <div style="font-size:12px;color:var(--muted)" id="welcomeText">Welcome</div>
+      </div>
+    </div>
 
-  <div>
-    <select id="languageSwitcher">
-      <option value="en">English</option>
-      <option value="kn">ಕನ್ನಡ</option>
-    </select>
+    <div class="top-actions">
+      <select id="languageSwitcher">
+        <option value="en">English</option>
+        <option value="kn">ಕನ್ನಡ</option>
+      </select>
 
-    <button class="logout" onclick="logout()">Logout</button>
-  </div>
-</nav>
-
-<!-- MAIN CONTAINER -->
-<div class="container">
-
-  <h2 data-en="Welcome Parent" data-kn="ಸ್ವಾಗತ ಪೋಷಕರು">Welcome Parent</h2>
-
-  <!-- SECTION 1: Add Baby -->
-  <div class="card">
-    <h3 data-en="Add Baby" data-kn="ಶಿಶುವನ್ನು ಸೇರಿಸಿ">Add Baby</h3>
-
-    <label data-en="Baby Name" data-kn="ಶಿಶುವಿನ ಹೆಸರು">Baby Name</label>
-    <input type="text" id="babyName">
-
-    <label data-en="Date of Birth" data-kn="ಹುಟ್ಟಿದ ದಿನಾಂಕ">Date of Birth</label>
-    <input type="date" id="babyDOB">
-
-    <button onclick="addBaby()">Add Baby</button>
-
-    <p id="addBabyMsg" style="color:green;"></p>
+      <button class="btn ghost" onclick="openDashboard()" data-en="Dashboard" data-kn="ಡ್ಯಾಶ್‌ಬೋರ್ಡ್">Dashboard</button>
+      <button class="btn" onclick="logout()" data-en="Logout" data-kn="ಲಾಗೌಟ್">Logout</button>
+    </div>
   </div>
 
-  <!-- SECTION 2: Baby List -->
-  <div class="card">
-    <h3 data-en="Your Babies" data-kn="ನಿಮ್ಮ ಶಿಶುಗಳು">Your Babies</h3>
-    <div id="babyList" class="baby-list"></div>
+  <!-- LAYOUT -->
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" role="navigation" aria-label="Parent menu">
+      <div class="menu-title" data-en="Parent Menu" data-kn="ಪೋಷಕರ ಮೆನು">Parent Menu</div>
+
+      <div class="nav-item" id="nav_history" onclick="showSection('history')">
+        <span>📜</span><span data-en="Baby History" data-kn="ಶಿಶು ಇತಿಹಾಸ" style="flex:1">Baby History</span>
+      </div>
+
+      <div class="nav-item" id="nav_doctors" onclick="showSection('doctors')">
+        <span>👩‍⚕️</span><span data-en="Doctors List" data-kn="ವೈದ್ಯರ ಪಟ್ಟಿ" style="flex:1">Doctors List</span>
+      </div>
+
+      <div class="nav-item" id="nav_profile" onclick="showSection('profile')">
+        <span>👤</span><span data-en="My Profile" data-kn="ನನ್ನ ಪ್ರೊಫೈಲ್" style="flex:1">My Profile</span>
+      </div>
+
+      <div class="nav-item" id="nav_status" onclick="showSection('consult_status')">
+        <span>📅</span><span data-en="Consultation Status" data-kn="ಸಲಹೆ ಸ್ಥಿತಿ" style="flex:1">Consultation Status</span>
+      </div>
+
+      <div style="margin-top:auto; font-size:13px; color:var(--muted);">
+        <div data-en="Logged in as" data-kn="ಲಾಗಿನ್ ಆಗಿರುವ ಪಾತ್ರ">Logged in as</div>
+        <strong id="userName">Parent</strong>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+      <!-- DEFAULT: Baby History (open by default) -->
+      <section id="section_history" class="card large">
+        <h1 data-en="Baby History" data-kn="ಶಿಶು ಇತಿಹಾಸ">Baby History</h1>
+        <p class="muted" data-en="View all babies, skin scans and previous predictions" data-kn="ಎಲ್ಲಾ ಶಿಶುಗಳು, ಸ್ಕ್ಯಾನ್ಸ್ ಮತ್ತು ಹಳೆ ಭವಿಷ್ಯವಾಣಿಗಳನ್ನು ನೋಡಿ">View all babies, skin scans and previous predictions</p>
+
+        <div style="margin-top:14px">
+          <div class="card row" style="align-items:flex-start; padding:12px;">
+            <div style="flex:1;">
+              <h3 data-en="Your Babies" data-kn="ನಿಮ್ಮ ಶಿಶುಗಳು">Your Babies</h3>
+              <div id="babyList" class="baby-list"></div>
+            </div>
+
+            <div style="width:360px;">
+              <h3 data-en="Selected Baby History" data-kn="ಆಯ್ದ ಶಿಶುವಿನ ಇತಿಹಾಸ">Selected Baby History</h3>
+              <div id="selectedBabyCard" style="margin-top:8px"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- DOCTORS LIST -->
+      <section id="section_doctors" class="card large" style="display:none;">
+        <h1 data-en="Doctors" data-kn="ವೈದ್ಯರು">Doctors</h1>
+        <p class="muted" data-en="Choose a doctor for consultation" data-kn="ಸಲಹೆಗಾಗಿ ವೈದ್ಯರನ್ನು ಆಯ್ಕೆಮಾಡಿ">Choose a doctor for consultation</p>
+
+        <div id="doctorsList" style="margin-top:12px; display:flex; flex-direction:column; gap:12px;"></div>
+      </section>
+
+      <!-- DOCTOR PROFILE / BOOKING -->
+      <section id="section_docprofile" class="card large" style="display:none;">
+        <h1 id="docTitle">Doctor Profile</h1>
+        <div id="docProfileArea" style="margin-top:12px;"></div>
+      </section>
+
+      <!-- CONSULTATION STATUS (NEW MODERN SYSTEM) -->
+      <section id="section_consult_status" class="card large" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          
+          <div>
+            <h1 data-en="Consultation Status" data-kn="ಸಲಹೆ ಸ್ಥಿತಿ">Consultation Status</h1>
+            <p class="muted"
+               data-en="Track your booked consultations and their current status"
+               data-kn="ನೀವು ಬುಕ್ ಮಾಡಿದ ಸಲಹೆಗಳ ಸ್ಥಿತಿಯನ್ನು ಟ್ರ್ಯಾಕ್ ಮಾಡಿ">
+               Track your booked consultations and their current status
+            </p>
+          </div>
+
+          <div style="display:flex;gap:10px;align-items:center;">
+            <button id="consultRefreshBtn" class="btn ghost"
+              data-en="Refresh" data-kn="ಅಪ್‌ಡೇಟ್">Refresh</button>
+
+            <button id="consultCreateBtn" class="btn"
+              data-en="Book New" data-kn="ಹೊಸದು ಬುಕ್ ಮಾಡಿ">Book New</button>
+          </div>
+
+        </div>
+
+        <div id="consultStatusArea" style="margin-top:16px;">
+          
+          <!-- Spinner -->
+          <div id="consultSpinner" style="display:none;padding:16px;text-align:center;color:var(--muted);">
+            <span data-en="Loading consultations…" data-kn="ಸಲಹೆಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ…">
+              Loading consultations…
+            </span>
+          </div>
+
+          <!-- Empty message -->
+          <div id="consultEmpty" style="display:none;padding:16px;text-align:center;color:var(--muted);">
+            <span data-en="No consultations found." data-kn="ಯಾವುದೇ ಸಲಹೆಗಳು ಕಂಡುಬಂದಿಲ್ಲ.">
+              No consultations found.
+            </span>
+          </div>
+
+          <!-- List container -->
+          <div id="consultList" style="display:none;display:flex;flex-direction:column;gap:12px;"></div>
+
+        </div>
+      </section>
+
+      <!-- PROFILE -->
+      <section id="section_profile" class="card large" style="display:none;">
+        <h1 data-en="My Profile" data-kn="ನನ್ನ ಪ್ರೊಫೈಲ್">My Profile</h1>
+        <div id="profileArea" style="margin-top:12px"></div>
+      </section>
+
+    </main>
+
   </div>
 
-  <!-- SECTION 3: Skin Scan -->
-  <div class="card">
-    <h3 data-en="Skin Scan" data-kn="ಚರ್ಮ ಸ್ಕ್ಯಾನ್">Skin Scan</h3>
-
-    <label data-en="Select Baby" data-kn="ಶಿಶುವನ್ನು ಆಯ್ಕೆಮಾಡಿ">Select Baby</label>
-    <select id="scanBabySelect"></select>
-
-    <label data-en="Upload Skin Image" data-kn="ಚರ್ಮದ ಚಿತ್ರವನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ">Upload Image</label>
-    <input type="file" id="skinImage">
-
-    <button onclick="scanSkin()">Scan</button>
-
-    <p id="scanMsg" style="color:blue;"></p>
-  </div>
-
-  <!-- SECTION 4: History -->
-  <div class="card">
-    <h3 data-en="Scan History" data-kn="ಸ್ಕ್ಯಾನ್ ಇತಿಹಾಸ">Scan History</h3>
-
-    <button onclick="viewHistory()">View History</button>
-    <div id="historyList"></div>
-  </div>
-
-</div>
+  <!-- Chat Floating Button (visible only when chat allowed) -->
+  <div id="chatFab" class="chat-fab" title="Open Chat" onclick="openChat()" hidden>💬</div>
 
 <script>
-  const BACKEND = "http://127.0.0.1:5000";
+/* ============================
+   Config & Auth
+   ============================ */
+const BACKEND = "http://127.0.0.1:5000"; // change if needed
+const token = localStorage.getItem("token") || localStorage.getItem("access_token");
+const role = localStorage.getItem("role");
+const userId = localStorage.getItem("user_id");
+const fullName = localStorage.getItem("full_name") || "Parent";
+let currentLang = localStorage.getItem("lang") || "en";
 
-  // -------------------------------
-  // LANG SWITCH
-  // -------------------------------
-  const switcher = document.getElementById("languageSwitcher");
-  const saved = localStorage.getItem("lang") || "en";
+/* PAGE PROTECTION (parent only) */
+if (!token) {
+  window.location.href = "login.html";
+}
+if (role !== "parent") {
+  // if doctor tries to open this page redirect
+  window.location.href = "doctor_dashboard.html";
+}
 
-  switcher.value = saved;
-  setLanguage(saved);
-  switcher.addEventListener("change", () => setLanguage(switcher.value));
+/* UI init */
+document.getElementById("userName").textContent = fullName;
+document.getElementById("welcomeText").textContent = currentLang === "en" ? `Welcome, ${fullName}` : `ಸ್ವಾಗತ, ${fullName}`;
+document.getElementById("languageSwitcher").value = currentLang;
 
-  function setLanguage(lang) {
-    document.querySelectorAll("[data-en]").forEach(el => {
-      el.textContent = el.getAttribute("data-" + lang);
-    });
-    localStorage.setItem("lang", lang);
+/* MULTI-LANGUAGE ENGINE */
+function setLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem("lang", lang);
+  document.querySelectorAll("[data-en]").forEach(el => {
+    el.textContent = el.getAttribute("data-" + lang);
+  });
+  document.querySelectorAll("[data-en-placeholder]").forEach(el => {
+    el.placeholder = el.getAttribute(`data-${lang}-placeholder`);
+  });
+  // update welcome text
+  document.getElementById("welcomeText").textContent = lang === "en" ? `Welcome, ${fullName}` : `ಸ್ವಾಗತ, ${fullName}`;
+}
+document.getElementById("languageSwitcher").addEventListener("change", e => setLanguage(e.target.value));
+setLanguage(currentLang);
+
+/* SECTION NAV */
+function hideAllSections() {
+  ["history","doctors","docprofile","consult_status","profile"].forEach(s => {
+    const el = document.getElementById("section_" + s);
+    if (el) el.style.display = "none";
+    const nav = document.getElementById("nav_" + s);
+    if (nav) nav.classList.remove("active");
+  });
+}
+function showSection(section) {
+  hideAllSections();
+  document.getElementById("section_" + section).style.display = "";
+  const navId = section === "history" ? "nav_history" : section === "doctors" ? "nav_doctors" : section === "profile" ? "nav_profile" : "nav_status";
+  const navEl = document.getElementById(navId);
+  if (navEl) navEl.classList.add("active");
+}
+
+/* OPEN DASHBOARD (keeps compatibility) */
+function openDashboard() { showSection('history'); }
+
+/* LOGOUT */
+function logout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("role");
+  localStorage.removeItem("user_id");
+  localStorage.removeItem("full_name");
+  window.location.href = "login.html";
+}
+
+/* Chat control (visible only when allowed) */
+function openChat() {
+  // This should navigate to your chat UI; placeholder:
+  window.location.href = `chat.html?user_id=${userId}`;
+}
+
+/* ============================
+   Backend calls & UI rendering
+   ============================ */
+
+/* Helper: fetch JSON with auth */
+async function apiFetch(url, options = {}) {
+  options.headers = options.headers || {};
+  options.headers["Authorization"] = `Bearer ${token}`;
+  try {
+    const res = await fetch(url, options);
+    if (!res.ok) {
+      // try to read json error
+      const txt = await res.text();
+      try { const j = JSON.parse(txt); throw new Error(j.message || txt); } catch { throw new Error(txt); }
+    }
+    return await res.json();
+  } catch (err) {
+    console.error("API error", err);
+    throw err;
+  }
+}
+
+/* Load babies and populate lists (called at startup) */
+let babies = [];
+let selectedBabyId = null;
+async function loadBabies() {
+  try {
+    const data = await apiFetch(`${BACKEND}/api/babies/${userId}`);
+    babies = Array.isArray(data) ? data : [];
+    renderBabyList();
+    if (babies.length) {
+      selectedBabyId = babies[0].id;
+      renderSelectedBaby(babies[0].id);
+    } else {
+      selectedBabyId = null;
+      renderSelectedBaby(null);
+    }
+  } catch (e) {
+    console.error(e);
+    document.getElementById("babyList").innerHTML = `<div class="muted">${currentLang === 'en' ? 'Failed to load babies' : 'ಶಿಶುಗಳನ್ನು ಲೋಡ್ ಮಾಡಲು ವಿಫಲವಾಗಿದೆ'}</div>`;
+  }
+}
+
+/* Render baby list */
+function renderBabyList() {
+  const list = document.getElementById("babyList");
+  list.innerHTML = "";
+  if (!babies.length) {
+    list.innerHTML = `<div class="muted">${currentLang === 'en' ? 'No babies added yet. Use Add Baby from profile.' : 'ಇನ್ನೂ ಯಾವುದೇ ಶಿಶು ಸೇರಿಸಲಿಲ್ಲ. ಪ್ರೊಫೈಲಿನಿಂದ ಶಿಶುವನ್ನು ಸೇರಿಸಿ.'}</div>`;
+    return;
+  }
+  babies.forEach(b => {
+    const div = document.createElement("div");
+    div.className = "baby-row";
+    div.innerHTML = `
+      <div>
+        <strong>${escapeHtml(b.name)}</strong>
+        <div class="meta">${escapeHtml(b.date_of_birth || '')}</div>
+      </div>
+      <div style="display:flex;gap:8px; align-items:center;">
+        <button class="btn ghost" onclick="selectBaby(${b.id})" data-en="View" data-kn="ವೀಕ್ಷಣೆಗೆ">${currentLang==='en'?'View':'ವೀಕ್ಷಣೆಗೆ'}</button>
+        <button class="btn" onclick="openBabyHistory(${b.id})" data-en="History" data-kn="ಇತಿಹಾಸ">${currentLang==='en'?'History':'ಇತಿಹಾಸ'}</button>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+/* select baby to show details */
+function selectBaby(id) {
+  selectedBabyId = id;
+  renderSelectedBaby(id);
+}
+
+/* render selected baby history and scans */
+async function renderSelectedBaby(id) {
+  const area = document.getElementById("selectedBabyCard");
+  if (!id) {
+    area.innerHTML = `<div class="muted">${currentLang === 'en' ? 'No baby selected.' : 'ಯಾವುದೇ ಶಿಶು ಆಯ್ದಿಲ್ಲ.'}</div>`;
+    return;
+  }
+  try {
+    const data = await apiFetch(`${BACKEND}/api/babies/${userId}/${id}/history`); // expects { baby: {...}, scans: [...] }
+    let html = `<div style="display:flex;flex-direction:column;gap:8px;">`;
+    html += `<div style="padding:12px;border-radius:10px;background:#fbfdff;border:1px solid #eef3ff"><strong>${escapeHtml(data.baby?.name || 'Baby')}</strong><div class="muted">${escapeHtml(data.baby?.date_of_birth || '')}</div></div>`;
+    if (!data.scans || !data.scans.length) {
+      html += `<div class="muted" style="padding:12px;border-radius:10px;margin-top:8px">${currentLang==='en'?'No scans found':'ಯಾವುದೇ ಸ್ಕ್ಯಾನ್ಸ್ ಕಂಡುಬಂದಿಲ್ಲ'}</div>`;
+    } else {
+      html += `<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">`;
+      data.scans.forEach(s => {
+        html += `
+          <div class="baby-row">
+            <div>
+              <strong>${escapeHtml(s.rash_type || '')}</strong>
+              <div class="meta">${escapeHtml(s.created_at || '')} • ${escapeHtml(String(s.confidence || ''))}%</div>
+            </div>
+            <div>
+              <button class="btn ghost" onclick="viewScan(${s.id})">${currentLang==='en'?'View':'ವೀಕ್ಷಣೆಗೆ'}</button>
+            </div>
+          </div>`;
+      });
+      html += `</div>`;
+    }
+    html += `</div>`;
+    area.innerHTML = html;
+  } catch (e) {
+    console.error(e);
+    area.innerHTML = `<div class="muted">${currentLang === 'en' ? 'Failed to load baby history' : 'ಶಿಶು ಇತಿಹಾಸ ಲೋಡ್ ಮಾಡಲು ವಿಫಲವಾಗಿದೆ'}</div>`;
+  }
+}
+
+/* view single scan (open new page or modal) */
+function viewScan(scanId) {
+  window.location.href = `scan_view.html?scan_id=${scanId}`;
+}
+
+/* manual open baby history */
+function openBabyHistory(babyId) {
+  selectedBabyId = babyId;
+  renderSelectedBaby(babyId);
+  showSection('history');
+}
+
+/* ----------------------------
+   DOCTORS LIST & PROFILE
+   ---------------------------- */
+let doctors = [];
+async function loadDoctors() {
+  try {
+    const data = await apiFetch(`${BACKEND}/api/doctors`);
+    doctors = Array.isArray(data) ? data : [];
+    renderDoctorsList();
+  } catch (e) {
+    console.error(e);
+    document.getElementById("doctorsList").innerHTML = `<div class="muted">${currentLang==='en'?'Failed to load doctors':'ವೈದ್ಯರನ್ನು ಲೋಡ್ ಮಾಡಲು ವಿಫಲವಾಗಿದೆ'}</div>`;
+  }
+}
+
+function renderDoctorsList() {
+  const area = document.getElementById("doctorsList");
+  area.innerHTML = "";
+  if (!doctors.length) {
+    area.innerHTML = `<div class="muted">${currentLang==='en'?'No doctors found':'ಯಾವುದೇ ವೈದ್ಯರು ಕಂಡುಬಂದಿಲ್ಲ'}</div>`;
+    return;
   }
 
-  // -------------------------------
-  // CHECK LOGIN
-  // -------------------------------
-  const token = localStorage.getItem("access_token");
-  const role = localStorage.getItem("role");
-  const userId = localStorage.getItem("user_id");
-
-  if (!token || role !== "parent") {
-    alert("Unauthorized access! Please login as Parent.");
-    window.location.href = "parent_login.html";
-  }
-
-  // -------------------------------
-  // LOGOUT
-  // -------------------------------
-  function logout() {
-    localStorage.clear();
-    window.location.href = "parent_login.html";
-  }
-
-  // -------------------------------
-  // FETCH BABIES
-  // -------------------------------
-  async function loadBabies() {
-    const res = await fetch(`${BACKEND}/api/babies/${userId}`);
-    const data = await res.json();
-    const babyList = document.getElementById("babyList");
-    const babySelect = document.getElementById("scanBabySelect");
-
-    babyList.innerHTML = "";
-    babySelect.innerHTML = "";
-
-    data.forEach(baby => {
-      babyList.innerHTML += `
-        <div class="baby-item">
-          <strong>${baby.name}</strong>
-          <span>${baby.date_of_birth}</span>
+  doctors.forEach(d => {
+    const div = document.createElement("div");
+    div.className = "doctor-card";
+    div.innerHTML = `
+      <div style="display:flex;gap:12px;align-items:center;flex:1">
+        <div class="doctor-photo">${escapeHtml((d.first_name || 'D').charAt(0))}</div>
+        <div style="flex:1">
+          <div style="font-weight:700">${escapeHtml(d.first_name)} ${escapeHtml(d.last_name || '')}</div>
+          <div class="muted">${escapeHtml(d.specialization || '')} • ${escapeHtml(String(d.experience || 'N/A'))} yrs</div>
         </div>
-      `;
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn ghost" onclick="viewDoctor(${d.id})">${currentLang==='en'?'View Profile':'ಪ್ರೊಫೈಲ್ ವೀಕ್ಷಿಸಿ'}</button>
+        <button class="btn" onclick="bookWithDoctor(${d.id})">${currentLang==='en'?'Book':'ಬುಕ್ ಮಾಡಿ'}</button>
+      </div>
+    `;
+    area.appendChild(div);
+  });
+}
 
-      babySelect.innerHTML += `
-        <option value="${baby.id}">${baby.name}</option>
-      `;
-    });
+async function viewDoctor(id) {
+  try {
+    const doc = await apiFetch(`${BACKEND}/api/doctors/${id}`);
+    showDoctorProfile(doc);
+  } catch (e) {
+    console.error(e);
+    alert(currentLang==='en'?'Failed to load doctor':'ವೈದ್ಯರನ್ನು ಲೋಡ್ ಮಾಡಲು ವಿಫಲವಾಗಿದೆ');
+  }
+}
+
+/* Show doctor profile in profile section with booking options */
+function showDoctorProfile(doc) {
+  showSection('docprofile');
+  document.getElementById("docTitle").textContent = (currentLang==='en' ? 'Doctor Profile' : 'ವೈದ್ಯರ ಪ್ರೊಫೈಲ್') + ` — ${doc.first_name} ${doc.last_name || ''}`;
+  const area = document.getElementById("docProfileArea");
+  area.innerHTML = `
+    <div style="display:flex;gap:18px;align-items:flex-start;">
+      <div style="width:140px;height:140px;border-radius:12px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-weight:700">${escapeHtml((doc.first_name||'D').charAt(0))}</div>
+      <div style="flex:1">
+        <h3 style="margin:0">${escapeHtml(doc.first_name)} ${escapeHtml(doc.last_name || '')}</h3>
+        <div class="muted">${escapeHtml(doc.specialization || '')} • ${escapeHtml(String(doc.experience || ''))} yrs</div>
+        <p style="margin-top:10px">${escapeHtml(doc.bio || '')}</p>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn" onclick="openBookingForm(${doc.id})" data-en="Book Consultation" data-kn="ಸಲಹೆ ಬುಕ್ ಮಾಡಿ">${currentLang==='en'?'Book Consultation':'ಸಲಹೆ ಬುಕ್ ಮಾಡಿ'}</button>
+          <button class="btn ghost" onclick="showSection('doctors')" data-en="Back to Doctors" data-kn="ವೈದ್ಯರಿಗೆ ಹಿಂತಿರುಗಿ">${currentLang==='en'?'Back to Doctors':'ವೈದ್ಯರಿಗೆ ಹಿಂತಿರುಗಿ'}</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="bookingFormContainer" style="margin-top:18px"></div>
+  `;
+}
+
+/* open booking form for a doctor */
+function openBookingForm(doctorId) {
+  const container = document.getElementById("bookingFormContainer");
+  container.innerHTML = `
+    <div style="padding:14px;border-radius:10px;border:1px solid #eef3ff;background:#fbfdff">
+      <h4 data-en="Book a Consultation" data-kn="ಸಲಹೆ ಬುಕ್ ಮಾಡಿ">${currentLang==='en'?'Book a Consultation':'ಸಲಹೆ ಬುಕ್ ಮಾಡಿ'}</h4>
+
+      <label data-en="Select Baby" data-kn="ಶಿಶುವನ್ನು ಆಯ್ಕೆಮಾಡಿ">${currentLang==='en'?'Select Baby':'ಶಿಶುವನ್ನು ಆಯ್ಕೆಮಾಡಿ'}</label>
+      <select id="bookBabySelect" style="width:100%;padding:8px;border-radius:8px;margin-top:6px"></select>
+
+      <label style="margin-top:8px" data-en="Choose Date" data-kn="ದಿನಾಂಕವನ್ನು ಆಯ್ಕೆಮಾಡಿ">${currentLang==='en'?'Choose Date':'ದಿನಾಂಕವನ್ನು ಆಯ್ಕೆಮಾಡಿ'}</label>
+      <input id="bookDate" type="date" style="width:100%;padding:8px;border-radius:8px;margin-top:6px"/>
+
+      <label style="margin-top:8px" data-en="Choose Time" data-kn="ಸಮಯವನ್ನು ಆಯ್ಕೆಮಾಡಿ">${currentLang==='en'?'Choose Time':'ಸಮಯವನ್ನು ಆಯ್ಕೆಮಾಡಿ'}</label>
+      <input id="bookTime" type="time" style="width:100%;padding:8px;border-radius:8px;margin-top:6px"/>
+
+      <label style="margin-top:8px" data-en="Reason (optional)" data_kn="ಕಾರಣ (ಐಚ್ಛಿಕ)" data-kn="ಕಾರಣ (ಐಚ್ಛಿಕ)">${currentLang==='en'?'Reason (optional)':'ಕಾರಣ (ಐಚ್ಛಿಕ)'}</label>
+      <textarea id="bookReason" rows="3" style="width:100%;padding:8px;border-radius:8px;margin-top:6px"></textarea>
+
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn" onclick="confirmBooking(${doctorId})">${currentLang==='en'?'Confirm Booking':'ಬುಕ್ಕಿಂಗ್ ದೃಢೀಕರಿಸಿ'}</button>
+        <button class="btn ghost" onclick="document.getElementById('bookingFormContainer').innerHTML=''">${currentLang==='en'?'Cancel':'ರದ್ದುಮಾಡಿ'}</button>
+      </div>
+    </div>
+  `;
+
+  // populate baby select
+  const sel = document.getElementById("bookBabySelect");
+  sel.innerHTML = '';
+  babies.forEach(b => {
+    const opt = document.createElement("option");
+    opt.value = b.id; opt.text = b.name;
+    sel.appendChild(opt);
+  });
+}
+
+/* confirm booking API */
+async function confirmBooking(doctorId) {
+  const babyId = document.getElementById("bookBabySelect").value;
+  const date = document.getElementById("bookDate").value;
+  const time = document.getElementById("bookTime").value;
+  const reason = document.getElementById("bookReason").value.trim();
+
+  if (!babyId || !date || !time) {
+    alert(currentLang==='en' ? 'Please select baby, date and time' : 'ದಯವಿಟ್ಟು ಶಿಶು, ದಿನಾಂಕ ಮತ್ತು ಸಮಯ ಆಯ್ಕೆಮಾಡಿ');
+    return;
   }
 
-  // -------------------------------
-  // ADD BABY
-  // -------------------------------
-  async function addBaby() {
-    const name = document.getElementById("babyName").value.trim();
-    const dob = document.getElementById("babyDOB").value;
+  try {
+    const payload = {
+      parent_id: userId,
+      baby_id: babyId,
+      doctor_id: doctorId,
+      date,
+      time,
+      reason
+    };
+    const res = await apiFetch(`${BACKEND}/api/consultations/book`, { method: "POST", body: JSON.stringify(payload), headers: { "Content-Type": "application/json" }});
+    alert(res.message || (currentLang==='en' ? 'Booked' : 'ಬುಕ್ ಆಗಿದೆ'));
+    await loadConsultStatus();
+    document.getElementById("bookingFormContainer").innerHTML = '';
+    showSection('consult_status');
+  } catch (e) {
+    console.error(e);
+    alert(currentLang==='en' ? 'Booking failed' : 'ಬುಕ್ಕಿಂಗ್ ವಿಫಲವಾಗಿದೆ');
+  }
+}
 
-    if (!name || !dob) {
-      alert("Fill all baby details");
+/* ----------------------------
+   Consultation Status (NEW)
+   ---------------------------- */
+const consultRefreshBtn = document.getElementById("consultRefreshBtn");
+const consultCreateBtn = document.getElementById("consultCreateBtn");
+const consultSpinner = document.getElementById("consultSpinner");
+const consultEmpty = document.getElementById("consultEmpty");
+const consultList = document.getElementById("consultList");
+
+consultRefreshBtn?.addEventListener("click", () => loadConsultStatus());
+consultCreateBtn?.addEventListener("click", () => {
+  // open doctor list section so parent can book
+  showSection('doctors');
+});
+
+/* call this to load & render consultations for the logged-in parent */
+async function loadConsultStatus() {
+  // UI reset
+  consultSpinner.style.display = "";
+  consultEmpty.style.display = "none";
+  consultList.style.display = "none";
+  consultList.innerHTML = "";
+
+  try {
+    // GET consultations for parent. Backend should return an array.
+    const res = await apiFetch(`${BACKEND}/api/consultations/status/${userId}`);
+    const items = Array.isArray(res) ? res : (res.consultations || res.items || []);
+
+    consultSpinner.style.display = "none";
+
+    if (!items || items.length === 0) {
+      consultEmpty.style.display = "";
+      consultList.style.display = "none";
       return;
     }
 
-    const res = await fetch(`${BACKEND}/api/babies/add`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        parent_id: userId,
-        name,
-        date_of_birth: dob
-      })
-    });
+    consultEmpty.style.display = "none";
+    consultList.style.display = "";
 
-    const data = await res.json();
-    document.getElementById("addBabyMsg").textContent = data.message;
+    // render each consultation card
+    items.forEach(item => {
+      const card = document.createElement("div");
+      card.className = "baby-row";
+      card.style.justifyContent = "space-between";
+      card.style.alignItems = "center";
 
-    loadBabies();
-  }
-
-  // -------------------------------
-  // SCAN SKIN IMAGE
-  // -------------------------------
-  async function scanSkin() {
-    const baby_id = document.getElementById("scanBabySelect").value;
-    const file = document.getElementById("skinImage").files[0];
-
-    if (!baby_id || !file) {
-      alert("Please select baby and upload image");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("baby_id", baby_id);
-
-    const res = await fetch(`${BACKEND}/predict`, {
-      method: "POST",
-      body: formData
-    });
-
-    const data = await res.json();
-    document.getElementById("scanMsg").textContent =
-      `Prediction: ${data.rash_type} (Confidence: ${data.confidence}%)`;
-  }
-
-  // -------------------------------
-  // VIEW HISTORY
-  // -------------------------------
-  async function viewHistory() {
-    const res = await fetch(`${BACKEND}/history/${userId}`);
-    const data = await res.json();
-
-    const area = document.getElementById("historyList");
-    area.innerHTML = "";
-
-    data.forEach(item => {
-      area.innerHTML += `
-        <div class="baby-item">
-          <strong>${item.rash_type}</strong>
-          <span>${item.created_at}</span>
+      // left html
+      const leftHtml = `
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="font-weight:700">${escapeHtml(item.doctor_name || item.doctor || (currentLang==='en'?'Doctor':'ವೈದ್ಯ'))} • ${escapeHtml(item.baby_name || '')}</div>
+          <div class="muted">${escapeHtml(item.date || item.requested_at || item.created_at || '')} • ${escapeHtml(item.rash_type || '')}</div>
         </div>
       `;
+
+      // right box
+      const rightDiv = document.createElement("div");
+      rightDiv.style.display = "flex";
+      rightDiv.style.flexDirection = "column";
+      rightDiv.style.gap = "8px";
+      rightDiv.style.alignItems = "flex-end";
+
+      // status pill
+      const pill = document.createElement("span");
+      const statusKey = (item.status || 'pending');
+      pill.className = `status-pill ${statusKey}`;
+      pill.textContent = translateStatus(statusKey);
+      rightDiv.appendChild(pill);
+
+      // actions row
+      const actions = document.createElement("div");
+      actions.style.display = "flex";
+      actions.style.gap = "8px";
+      actions.style.marginTop = "6px";
+
+      // View Details
+      const viewBtn = document.createElement("button");
+      viewBtn.className = "btn ghost";
+      viewBtn.textContent = currentLang === "en" ? "View Details" : "ವಿವರಗಳನ್ನು ನೋಡಿ";
+      viewBtn.onclick = () => window.location.href = `consult_view.html?consult_id=${item.id || item.consultation_id}`;
+      actions.appendChild(viewBtn);
+
+      // Chat if accepted
+      if (statusKey === "accepted") {
+        const chatBtn = document.createElement("button");
+        chatBtn.className = "btn";
+        chatBtn.textContent = currentLang === "en" ? "Chat" : "ಚಾಟ್";
+        chatBtn.onclick = () => {
+          window.location.href = `chat.html?consult_id=${item.id || item.consultation_id}&doctor_id=${item.doctor_id || item.doctorId || ''}`;
+        };
+        actions.appendChild(chatBtn);
+      }
+
+      // Cancel if pending
+      if (statusKey === "pending") {
+        const cancelBtn = document.createElement("button");
+        cancelBtn.className = "btn ghost";
+        cancelBtn.textContent = currentLang === "en" ? "Cancel" : "ರದ್ದುಮಾಡಿ";
+        cancelBtn.onclick = () => cancelConsult(item.id || item.consultation_id);
+        actions.appendChild(cancelBtn);
+      }
+
+      rightDiv.appendChild(actions);
+
+      card.innerHTML = leftHtml;
+      card.appendChild(rightDiv);
+
+      consultList.appendChild(card);
     });
+
+  } catch (err) {
+    consultSpinner.style.display = "none";
+    consultEmpty.style.display = "";
+    consultEmpty.textContent = currentLang === 'en' ? 'Failed to load consultations' : 'ಸಲಹೆಗಳನ್ನು ಲೋಡ್ ಮಾಡಲು ವಿಫಲವಾಗಿದೆ';
+    console.error("loadConsultStatus error:", err);
   }
+}
 
-  // Load data initially
-  loadBabies();
+/* Cancel consultation (pending) */
+async function cancelConsult(consultId) {
+  if (!confirm(currentLang==='en' ? 'Cancel this consultation?' : 'ಈ ಸಲಹೆಯನ್ನು ರದ್ದುಮಾಡೋಣವೇ?')) return;
+  try {
+    const res = await apiFetch(`${BACKEND}/api/consultations/${consultId}/cancel`, { method: "PUT", headers: { "Content-Type": "application/json" } });
+    alert(res.message || (currentLang==='en' ? 'Cancelled' : 'ರದ್ದುಮಾಡಲಾಯಿತು'));
+    await loadConsultStatus();
+  } catch (e) {
+    console.error(e);
+    alert(currentLang==='en' ? 'Action failed' : 'ಕ್ರಿಯೆ ವಿಫಲವಾಗಿದೆ');
+  }
+}
 
+/* Translate status label to current language */
+function translateStatus(status) {
+  if (!status) return '';
+  if (currentLang === 'kn') {
+    if (status === 'pending') return 'ಬಾಕಿಯಿದೆ';
+    if (status === 'accepted') return 'ಸ್ವೀಕರಿಸಲಾಗಿದೆ';
+    if (status === 'rejected') return 'ನಿರಾಕರಿಸಲಾಗಿದೆ';
+    if (status === 'scheduled') return 'ನಿಗದಿಪಡಿಸಲಾಗಿದೆ';
+    return status;
+  }
+  // default english, capitalize first letter
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+/* When accepted -> open chat */
+function openChatForConsult(consultId, doctorId) {
+  window.location.href = `chat.html?consult_id=${consultId}&doctor_id=${doctorId}`;
+}
+
+/* =============================
+   Small helpers & startup
+   ============================= */
+function escapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function startup() {
+  showSection('history'); // open baby history by default (Option B)
+  await loadBabies();
+  await loadDoctors();
+  await loadConsultStatus();
+
+  // show/hide chat fab based on any accepted consults
+  const anyAccepted = (() => {
+    try {
+      const list = consultList.querySelectorAll('.baby-row');
+      return Array.from(list).some(r => r.textContent.toLowerCase().includes('accepted') || r.innerHTML.includes('Chat'));
+    } catch { return false; }
+  })();
+  if (anyAccepted) document.getElementById("chatFab").hidden = false;
+}
+
+/* load everything on start */
+startup();
 </script>
 
 </body>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title data-en="Consultation Status" data-kn="ಸಲಹೆ ಸ್ಥಿತಿ">Consultation Status</title>
+
+  <style>
+    :root{
+      --accent:#4CAF50;
+      --primary:#1166ee;
+      --bg:#f6fbff;
+      --card:#fff;
+      --muted:#6b7280;
+      --shadow: 0 8px 24px rgba(15,23,42,0.06);
+      --radius:10px;
+    }
+    *{box-sizing:border-box}
+    body{ margin:0; font-family:Inter, Arial, sans-serif; background:var(--bg); color:#0f1724; }
+
+    .topbar{
+      height:68px; display:flex; align-items:center; gap:12px;
+      padding:0 20px; background:#fff; box-shadow:var(--shadow); position:sticky; top:0; z-index:90;
+    }
+    .brand { display:flex; gap:12px; align-items:center; font-weight:700; }
+    .logo { width:42px; height:42px; border-radius:10px; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; }
+
+    .top-actions{ margin-left:auto; display:flex; gap:8px; align-items:center; }
+    .btn { padding:8px 12px; border-radius:8px; border:none; cursor:pointer; font-weight:600; }
+    .btn.ghost { background:#fff; border:1px solid #e6e9ef; }
+    .btn.primary { background:var(--primary); color:#fff; }
+
+    .container { max-width:900px; margin:28px auto; padding:16px; }
+
+    .card { background:var(--card); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); }
+
+    h1 { margin:0 0 8px 0; font-size:20px; }
+    .muted { color:var(--muted); font-size:14px; }
+
+    .status-list{ margin-top:12px; display:flex; flex-direction:column; gap:12px; }
+    .status-card {
+      background:#fff; border-radius:10px; padding:12px; border:1px solid #eef6ff;
+      display:flex; justify-content:space-between; align-items:center; gap:12px;
+    }
+    .status-left{ display:flex; flex-direction:column; gap:6px; }
+    .pill {
+      padding:6px 10px; border-radius:999px; font-weight:700; color:#fff; font-size:13px; display:inline-block;
+    }
+    .pill.pending { background:#f39c12; }
+    .pill.accepted { background:#10b981; }
+    .pill.rejected { background:#ef4444; }
+
+    .empty { text-align:center; color:var(--muted); padding:24px 0; font-size:16px; }
+
+    @media (max-width:720px){ .topbar{padding:0 12px} .container{padding:12px} .status-card{flex-direction:column;align-items:flex-start} }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">👶</div>
+      <div>
+        <div style="font-size:14px" data-en="Smart Baby Skin Scanner" data-kn="ಸ್ಮಾರ್ಟ್ ಬೇಬಿ ಸ್ಕಿನ್ ಸ್ಕ್ಯಾನರ್">Smart Baby Skin Scanner</div>
+        <div style="font-size:12px;color:var(--muted)" id="topSub">Consultations</div>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <select id="languageSwitcher" aria-label="Language">
+        <option value="en">English</option>
+        <option value="kn">ಕನ್ನಡ</option>
+      </select>
+
+      <button id="backBtn" class="btn ghost" data-en="Back" data-kn="ಹಿಂದೆಗೆ">Back</button>
+      <button id="refreshBtn" class="btn" data-en="Refresh" data_kn="ರಿಫ್ರೆಶ್" data-kn="ರಿಫ್ರೆಶ್">Refresh</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <h1 data-en="Your Consultation Requests" data-kn="ನಿಮ್ಮ ಸಲಹೆ ಕೋರಿಕೆಗಳು">Your Consultation Requests</h1>
+      <p class="muted" data-en="Track the status of consultations you requested." data-kn="ನೀವು ಕೇಳಿದ ಸಲಹೆಗಳ ಸ್ಥಿತಿಯನ್ನು ಟ್ರ್ಯಾಕ್ ಮಾಡಿ.">Track the status of consultations you requested.</p>
+
+      <div id="statusArea" class="status-list" aria-live="polite" style="min-height:120px; margin-top:12px;">
+        <div class="muted">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const BACKEND = "http://127.0.0.1:5000";
+
+  // tokens: prefer token (consistent with dashboards), fallback to access_token
+  const token = localStorage.getItem("token") || localStorage.getItem("access_token");
+  const role = localStorage.getItem("role");
+  const userId = localStorage.getItem("user_id");
+  let lang = localStorage.getItem("lang") || "en";
+
+  // element refs
+  const statusArea = document.getElementById("statusArea");
+  const languageSwitcher = document.getElementById("languageSwitcher");
+  const backBtn = document.getElementById("backBtn");
+  const refreshBtn = document.getElementById("refreshBtn");
+
+  // protection: only parents allowed
+  if (!token) {
+    window.location.href = "login.html";
+  } else if (role && role !== "parent") {
+    // doctor or other roles should not access this page
+    window.location.href = role === "doctor" ? "doctor_dashboard.html" : "home.html";
+  }
+
+  // language setup
+  languageSwitcher.value = lang;
+  languageSwitcher.addEventListener("change", (e) => { setLang(e.target.value); fetchStatus(); });
+  function setLang(l) {
+    lang = l;
+    localStorage.setItem("lang", l);
+    document.querySelectorAll("[data-en]").forEach(el => el.textContent = el.getAttribute("data-" + l));
+    document.querySelectorAll("[data-en-placeholder]").forEach(el => el.placeholder = el.getAttribute(`data-${l}-placeholder`));
+    document.getElementById("topSub").textContent = l === 'en' ? 'Consultations' : 'ಸಲಹೆಗಳು';
+  }
+  setLang(lang);
+
+  backBtn.addEventListener("click", () => window.location.href = "parent_dashboard.html");
+  refreshBtn.addEventListener("click", () => fetchStatus());
+
+  // helper: fetch with auth + error handling
+  async function authFetch(path, opts = {}) {
+    opts.headers = opts.headers || {};
+    opts.headers["Authorization"] = `Bearer ${token}`;
+    try {
+      const res = await fetch(path, opts);
+      if (!res.ok) {
+        const txt = await res.text();
+        let msg;
+        try { msg = JSON.parse(txt).message || txt; } catch { msg = txt; }
+        throw new Error(msg);
+      }
+      return await res.json();
+    } catch (err) {
+      console.error("API error:", err);
+      throw err;
+    }
+  }
+
+  // translate status to Kannada label
+  function statusLabel(s) {
+    if (!s) return s;
+    if (lang === 'kn') {
+      if (s === 'pending') return 'ಬಾಕಿಯಿದೆ';
+      if (s === 'accepted') return 'ಸ್ವೀಕರಿಸಲಾಗಿದೆ';
+      if (s === 'rejected') return 'ನಿರಾಕರಿಸಲಾಗಿದೆ';
+      return s;
+    }
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  // render one request card
+  function renderRequestCard(req) {
+    const div = document.createElement('div');
+    div.className = 'status-card';
+
+    const left = document.createElement('div');
+    left.className = 'status-left';
+    left.innerHTML = `
+      <div><strong>${req.doctor_name || (req.doctor || '—')}</strong></div>
+      <div class="muted">${req.requested_at || req.created_at || ''} • ${req.rash_type || ''}</div>
+    `;
+
+    const right = document.createElement('div');
+    const pill = document.createElement('span');
+    pill.className = 'pill ' + (req.status || 'pending');
+    pill.textContent = statusLabel(req.status);
+
+    const btnView = document.createElement('button');
+    btnView.className = 'btn ghost';
+    btnView.textContent = lang === 'en' ? 'View Details' : 'ವಿವರಗಳನ್ನು ನೋಡಿ';
+    btnView.onclick = () => window.location.href = `consult_view.html?consult_id=${req.consultation_id || req.id}`;
+
+    right.appendChild(pill);
+    right.appendChild(document.createElement('div')).style.height = '6px';
+    right.appendChild(btnView);
+
+    div.appendChild(left);
+    div.appendChild(right);
+
+    return div;
+  }
+
+  // main: fetch status list for parent
+  async function fetchStatus() {
+    statusArea.innerHTML = `<div class="muted">${lang === 'en' ? 'Loading…' : 'ಲೋಡ್ ಆಗುತ್ತಿದೆ…'}</div>`;
+    try {
+      // endpoint: GET /api/consultations/parent  (adjust if your endpoint differs)
+      const data = await authFetch(`${BACKEND}/api/consultations/parent?parent_id=${userId}`);
+      // some backends may return array, or { consultations: [...] }
+      const list = Array.isArray(data) ? data : (data.consultations || data.items || []);
+      if (!list || list.length === 0) {
+        statusArea.innerHTML = `<div class="empty">${lang === 'en' ? 'No consultation requests yet.' : 'ಇನ್ನೂ ಯಾವ ಸಲಹೆ ಕೋರಿಕೆಗಳಿಲ್ಲ.'}</div>`;
+        return;
+      }
+      statusArea.innerHTML = '';
+      list.forEach(r => statusArea.appendChild(renderRequestCard(r)));
+    } catch (err) {
+      statusArea.innerHTML = `<div class="empty">${lang === 'en' ? 'Failed to load. Try again.' : 'ಲೋಡ್ ಮಾಡಲು ವಿಫಲವಾಗಿದೆ. ಮತ್ತೊಮ್ಮೆ ಪ್ರಯತ್ನಿಸಿ.'}</div>`;
+    }
+  }
+
+  // initial load
+  fetchStatus();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Case Details</title>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #eaf7ff;
+      font-family: Arial, sans-serif;
+    }
+
+    nav {
+      background: #4CAF50;
+      padding: 12px 20px;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .container {
+      max-width: 800px;
+      background: white;
+      margin: 30px auto;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    img {
+      width: 100%;
+      border-radius: 12px;
+      margin-top: 10px;
+    }
+
+    .info-box {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f5f5f5;
+      border-radius: 10px;
+    }
+
+    .label {
+      font-weight: bold;
+      color: #4CAF50;
+    }
+  </style>
+</head>
+
+<body>
+
+<nav>
+  <div data-en="Consultation Case Details" data-kn="ಸಲಹೆ ಪ್ರಕರಣದ ವಿವರಗಳು">
+    Consultation Case Details
+  </div>
+
+  <select id="languageSwitcher">
+    <option value="en">English</option>
+    <option value="kn">ಕನ್ನಡ</option>
+  </select>
+</nav>
+
+
+<div class="container">
+
+  <h1 data-en="Case Details" data-kn="ಪ್ರಕರಣ ವಿವರಗಳು">Case Details</h1>
+
+  <div id="caseContainer">Loading...</div>
+
+</div>
+
+
+<script>
+  const BACKEND = "http://127.0.0.1:5000";
+
+  // LANGUAGE SWITCHER
+  const switcher = document.getElementById("languageSwitcher");
+  const savedLang = localStorage.getItem("lang") || "en";
+  switcher.value = savedLang;
+  setLang(savedLang);
+  switcher.addEventListener("change", () => setLang(switcher.value));
+
+  function setLang(lang) {
+    document.querySelectorAll("[data-en]").forEach((el) => {
+      el.textContent = el.getAttribute(`data-${lang}`);
+    });
+    localStorage.setItem("lang", lang);
+  }
+
+  // URL PARAMS
+  const params = new URLSearchParams(window.location.search);
+  const recordID = params.get("record_id");
+
+  async function loadCase() {
+    const token = localStorage.getItem("access_token");
+    const container = document.getElementById("caseContainer");
+
+    if (!recordID) {
+      container.innerHTML = "<p>No record selected!</p>";
+      return;
+    }
+
+    try {
+      const res = await fetch(`${BACKEND}/api/consultations/details/${recordID}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json();
+
+      if (data.error) {
+        container.innerHTML = `<p>Error: ${data.error}</p>`;
+        return;
+      }
+
+      container.innerHTML = `
+        <img src="${data.image_path}" alt="Baby Rash">
+
+        <div class="info-box">
+          <p><span class="label" data-en="Baby Name:" data-kn="ಮಗುವಿನ ಹೆಸರು:">
+            Baby Name:
+          </span> ${data.baby_name}</p>
+
+          <p><span class="label" data-en="Rash Type:" data-kn="ರಾಶಿ ಪ್ರಕಾರ:">
+            Rash Type:
+          </span> ${data.rash}</p>
+
+          <p><span class="label" data-en="Confidence:" data-kn="ವಿಶ್ವಾಸದ ಮಟ್ಟ:">
+            Confidence:
+          </span> ${data.confidence}</p>
+
+          <p><span class="label" data-en="Date:" data-kn="ದಿನಾಂಕ:">
+            Date:
+          </span> ${data.created_at}</p>
+        </div>
+      `;
+
+      setLang(savedLang);
+
+    } catch (err) {
+      container.innerHTML = "<p>Error loading case data.</p>";
+    }
+  }
+
+  loadCase();
+</script>
+
+</body>
+<script src="script.js"></script>
+</html>

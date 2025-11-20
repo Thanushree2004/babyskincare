@@ -3,27 +3,79 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>History – Smart Baby Skin Care</title>
+  <title>History - Smart Baby Skin Scanner</title>
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/4762/4762967.png" type="image/png">
+
   <style>
-    body {background:#eef7ff; font-family: Arial; margin:0; padding:0;}
-    nav {background:#4CAF50; padding:10px; display:flex; justify-content:space-between; align-items:center;}
-    .logo {color:white; font-size:24px; font-weight:bold;}
-    .container {max-width:1000px; margin:30px auto; background:white; padding:20px;
-                border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.2);}
-    h1 {color:#333;}
-    .record-card {display:flex; align-items:center; background:#f9f9f9; margin:10px 0;
-                  padding:10px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1);}
-    .record-card img {width:120px; height:120px; object-fit:cover; border-radius:10px;}
-    .info {margin-left:20px; text-align:left; flex:1;}
-    .btn-consult {background:#ff9800; padding:8px 15px; border:none; border-radius:8px;
-                  color:white; cursor:pointer;}
-    .btn-consult:hover {background:#fb8c00;}
+    body {background-color: #eaf7ff; font-family: Arial, sans-serif; margin: 0; padding: 0;}
+
+    /* Navbar */
+    nav {background-color: #4CAF50; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between;}
+    .logo {color: white; font-size: 24px; font-weight: bold;}
+    .menu-icon {font-size: 24px; color: white; cursor: pointer;}
+    .menu-items {display: none; flex-direction: column; position: absolute; top: 50px; left: 0;
+      background-color: #4CAF50; width: 100%; padding: 10px 0; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+    .menu-items li {margin: 10px 0; text-align: center;}
+    .menu-items li a {color: white; text-decoration: none; font-size: 18px; font-weight: bold;}
+
+    /* Container */
+    .container {max-width: 1200px; margin: 50px auto; padding: 20px;}
+
+    h1 {text-align: center; color: #2c3e50; margin-bottom: 20px;}
+
+    /* Baby Section */
+    .baby-section {margin-bottom: 30px;}
+    .baby-title {font-size: 22px; font-weight: bold; color: #333; margin-bottom: 10px;}
+
+    /* Cards Grid */
+    .history-grid {display: flex; flex-wrap: wrap; gap: 20px;}
+    .history-card {
+      width: 280px;
+      background: white;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .history-card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+    .history-info {margin-top: 10px; font-size: 14px;}
+    .history-info strong {color: #4CAF50;}
+
+    .consult-btn {
+      margin-top: 10px;
+      width: 100%;
+      padding: 8px 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .consult-btn:hover {background-color: #45a049;}
+
+    .empty-message {text-align: center; margin-top: 30px; font-size: 18px; color: #777;}
   </style>
 </head>
+
 <body>
 
+<!-- NAVBAR -->
 <nav>
-  <div class="logo" data-en="👶 History" data-kn="👶 ಇತಿಹಾಸ">👶 History</div>
+  <div class="logo" data-en="👶 Baby Skin Care" data-kn="👶 ಬೇಬಿ ಸ್ಕಿನ್ ಕೇರ್">👶 Baby Skin Care</div>
+  <div class="menu-icon" id="menuIcon">☰</div>
+
+  <ul class="menu-items" id="menuItems">
+    <li><a href="home.html" data-en="Home" data-kn="ಮುಖ್ಯ ಮೆನು">Home</a></li>
+    <li><a href="upload.html" data-en="Upload" data-kn="ಅಪ್ಲೋಡ್">Upload</a></li>
+    <li><a href="history.html" data-en="History" data-kn="ಇತಿಹಾಸ">History</a></li>
+    <li><a href="about.html" data-en="About" data-kn="ಬಗ್ಗೆ">About</a></li>
+  </ul>
 
   <select id="languageSwitcher">
     <option value="en">English</option>
@@ -31,77 +83,23 @@
   </select>
 </nav>
 
+<!-- MAIN CONTENT -->
 <div class="container">
-  <h1 data-en="Baby Rash History" data-kn="ಮಗುವಿನ ರಾಶ್ ಇತಿಹಾಸ">Baby Rash History</h1>
+  <h1 data-en="Baby Rash History" data-kn="ಮಗುವಿನ ರಾಶಿ ಇತಿಹಾಸ">Baby Rash History</h1>
 
-  <div id="historyList">Loading...</div>
+  <div id="historyContainer"></div>
 </div>
 
 <script>
   const BACKEND_URL = "http://127.0.0.1:5000";
-  const historyContainer = document.getElementById("historyList");
 
-  async function loadHistory() {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      historyContainer.innerHTML = "<p>Please login first.</p>";
-      return;
-    }
+  // Navbar toggle
+  document.getElementById("menuIcon").onclick = () => {
+    const m = document.getElementById("menuItems");
+    m.style.display = m.style.display === "block" ? "none" : "block";
+  };
 
-    const res = await fetch(`${BACKEND_URL}/api/history/list`, {
-      headers: { "Authorization": "Bearer " + token }
-    });
-
-    const data = await res.json();
-
-    if (!data.length) {
-      historyContainer.innerHTML = "<p>No records found.</p>";
-      return;
-    }
-
-    historyContainer.innerHTML = "";
-
-    data.forEach(rec => {
-      const div = document.createElement("div");
-      div.className = "record-card";
-
-      div.innerHTML = `
-        <img src="${BACKEND_URL}/${rec.image_path}" alt="image">
-        <div class="info">
-          <p><strong data-en="Rash Type:" data-kn="ರಾಶ್ ಪ್ರಕಾರ:">Rash Type:</strong> ${rec.rash_type}</p>
-          <p><strong data-en="Confidence:" data-kn="ವಿಶ್ವಾಸದ ಮಟ್ಟ:">Confidence:</strong> ${rec.confidence}</p>
-          <p><strong data-en="Date:" data-kn="ದಿನಾಂಕ:">Date:</strong> ${rec.created_at}</p>
-        </div>
-        <button class="btn-consult"
-          onclick="consultAgain(${rec.record_id})"
-          data-en="Consult Again" data-kn="ಮತ್ತೆ ಸಲಹೆ ಪಡೆಯಿರಿ">
-          Consult Again
-        </button>
-      `;
-      historyContainer.appendChild(div);
-    });
-  }
-
-  async function consultAgain(record_id) {
-    const token = localStorage.getItem("access_token");
-    if (!token) return alert("Login first!");
-
-    const doctor_id = 2; // Default doctor
-
-    const res = await fetch(`${BACKEND_URL}/api/consultations/request`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token
-      },
-      body: JSON.stringify({ doctor_id, record_id })
-    });
-
-    const data = await res.json();
-    alert(data.message);
-  }
-
-  // Multi-language
+  // Language
   const switcher = document.getElementById("languageSwitcher");
   function setLanguage(lang) {
     document.querySelectorAll("[data-en]").forEach(el => {
@@ -109,14 +107,106 @@
     });
     localStorage.setItem("lang", lang);
   }
-
-  const savedLang = localStorage.getItem("lang") || "en";
-  switcher.value = savedLang;
-  setLanguage(savedLang);
+  switcher.value = localStorage.getItem("lang") || "en";
+  setLanguage(switcher.value);
   switcher.addEventListener("change", () => setLanguage(switcher.value));
 
+  // -------------------------------------
+  // FETCH FULL HISTORY
+  // -------------------------------------
+  async function loadHistory() {
+    const container = document.getElementById("historyContainer");
+    container.innerHTML = "Loading...";
+
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      container.innerHTML = "<p>Please login first.</p>";
+      return;
+    }
+
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/history`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+
+      const data = await res.json();
+
+      if (!data.history || data.history.length === 0) {
+        container.innerHTML = `<p class="empty-message">No history found</p>`;
+        return;
+      }
+
+      container.innerHTML = "";
+      data.history.forEach(baby => {
+        const section = document.createElement("div");
+        section.classList.add("baby-section");
+
+        section.innerHTML = `
+          <div class="baby-title">${baby.baby_name}</div>
+          <div class="history-grid" id="baby-${baby.baby_id}"></div>
+        `;
+        container.appendChild(section);
+
+        const grid = document.getElementById(`baby-${baby.baby_id}`);
+
+        baby.records.forEach(record => {
+          const fullImgURL = record.image_url.startsWith("http")
+            ? record.image_url
+            : BACKEND_URL + record.image_url;
+
+          const card = document.createElement("div");
+          card.classList.add("history-card");
+
+          card.innerHTML = `
+            <img src="${fullImgURL}" alt="Rash Image">
+            <div class="history-info">
+              <strong>Rash:</strong> ${record.rash_type}<br>
+              <strong>Confidence:</strong> ${record.confidence}<br>
+              <strong>Date:</strong> ${record.created_at}
+            </div>
+
+            <button class="consult-btn"
+              onclick="consultDoctor(${record.record_id})"
+              data-en="Consult Doctor"
+              data-kn="ಡಾಕ್ಟರನ್ನು ಸಂಪರ್ಕಿಸಿ">Consult Doctor</button>
+          `;
+
+          grid.appendChild(card);
+        });
+      });
+
+    } catch (err) {
+      container.innerHTML = `<p class='empty-message'>Error loading history.</p>`;
+    }
+  }
+
   loadHistory();
+
+  // -------------------------------------------------------
+  // CONSULT DOCTOR FUNCTION
+  // -------------------------------------------------------
+  async function consultDoctor(recordID) {
+    const token = localStorage.getItem("access_token");
+    const doctorID = 2;  // temporary — you'll connect real doctor list later
+
+    const res = await fetch(`${BACKEND_URL}/api/consultations/request`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        record_id: recordID,
+        doctor_id: doctorID
+      })
+    });
+
+    const data = await res.json();
+    alert(data.message || "Request sent!");
+  }
 </script>
 
 </body>
+<script src="script.js"></script>
+
 </html>

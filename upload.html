@@ -11,84 +11,100 @@
       background-color: #eaf7ff;
       font-family: Arial, sans-serif;
       margin: 0;
-      padding: 0;
       text-align: center;
     }
 
-    /* NAVBAR FIXED */
+    /* FIXED NAVBAR (NO HAMBURGER) */
     nav {
       background-color: #4CAF50;
-      padding: 10px 20px;
+      padding: 12px 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      position: relative;
-      z-index: 100000;   /* Highest */
+      white-space: nowrap;
     }
 
-    .logo {color: white; font-size: 24px; font-weight: bold;}
-    .menu-icon {font-size: 24px; color: white; cursor: pointer;}
-
-    /* DROPDOWN FIXED */
-    .menu-items {
-      display: none;
-      flex-direction: column;
-      position: absolute;
-      top: 50px;
-      left: 0;
-      background-color: #4CAF50;
-      width: 100%;
-      padding: 10px 0;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      z-index: 99999;  /* On top of everything */
+    .logo {
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
     }
 
-    .menu-items li {
-      margin: 10px 0;
-      text-align: center;
+    .nav-links {
       list-style: none;
+      display: flex;
+      gap: 25px;
+      margin: 0;
+      padding: 0;
     }
 
-    .menu-items li a {
+    .nav-links li {
+      display: inline-block;
+    }
+
+    .nav-links li a {
       color: white;
       text-decoration: none;
       font-size: 18px;
       font-weight: bold;
     }
 
-    .menu-items li a:hover {text-decoration: underline;}
+    .nav-links li a:hover {
+      text-decoration: underline;
+    }
 
-    /* FIX: container must be lower in stacking order */
+    .logout-btn {
+      background: white;
+      color: #4CAF50;
+      font-weight: bold;
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .logout-btn:hover {
+      background: #e8e8e8;
+    }
+
+    /* Language Selector */
+    #languageSwitcher {
+      margin-left: 15px;
+      padding: 5px;
+    }
+
+    /* MAIN CONTENT */
     .container {
       max-width: 1200px;
-      margin: 50px auto;
+      margin: 40px auto;
       padding: 20px;
       background-color: white;
       border-radius: 15px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      position: relative;
-      z-index: 1;    /* lower than menu */
     }
 
-    h1 {color: #2c3e50; margin-bottom: 20px;}
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
 
     .upload-section {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
       flex-wrap: wrap;
     }
 
     .upload-box, .preview-box, .result-box {
-      width: 28%;
+      width: 30%;
       background-color: #f9f9f9;
       border-radius: 10px;
       padding: 15px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.1);
       margin: 10px;
+      min-width: 280px;
     }
-
-    .upload-box input[type="file"] {margin-top: 10px; padding: 5px; font-size: 14px;}
 
     .upload-box button {
       margin-top: 10px;
@@ -101,11 +117,11 @@
       cursor: pointer;
     }
 
-    .upload-box button:hover {background-color: #45a049;}
-
-    img {max-width: 100%; border-radius: 10px; margin-top: 10px;}
-    .result-box ul {text-align: left; padding: 0; list-style: none;}
-    .result-box ul li {margin-bottom: 10px; font-size: 14px;}
+    img {
+      max-width: 100%;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
 
     #consultDoctorBtn {
       background: #ff9800;
@@ -117,48 +133,24 @@
       cursor: pointer;
       font-size: 16px;
     }
-
-    #consultDoctorBtn:hover {background: #fb8c00;}
-
-    /* Camera Modal */
-    .camera-modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    }
-
-    .camera-card {
-      background: white;
-      padding: 12px;
-      border-radius: 8px;
-      width: 90%;
-      max-width: 480px;
-      text-align: center;
-    }
-
-    video {width: 100%; height: auto; border-radius: 8px;}
-    .camera-controls {margin-top: 8px; display:flex; gap:8px; justify-content:center;}
-    .hidden-canvas {display:none;}
   </style>
 </head>
 
 <body>
 
-<!-- Navbar -->
+<!-- FIXED NAVBAR -->
 <nav>
-  <div class="logo" data-en="👶 Baby Skin Care" data-kn="👶 ಬೇಬಿ ಸ್ಕಿನ್ ಕೇರ್">👶 Baby Skin Care</div>
-  <div class="menu-icon" id="menuIcon">☰</div>
+  <div class="logo">👶 Baby Skin Care</div>
 
-  <ul class="menu-items" id="menuItems">
-    <li><a href="home.html" data-en="Home" data-kn="ಮುಖಪುಟ">Home</a></li>
-    <li><a href="upload.html" data-en="Upload" data-kn="ಅಪ್ಲೋಡ್">Upload</a></li>
-    <li><a href="about.html" data-en="About" data-kn="ಕಂಪನಿ ಬಗ್ಗೆ">About</a></li>
-    <li><a href="contact_help.html" data-en="Contact Us & Help" data-kn="ಸಂಪರ್ಕಿಸಿ ಮತ್ತು ಸಹಾಯ">Contact Us & Help</a></li>
+  <ul class="nav-links">
+    <li><a href="home.html">Home</a></li>
+    <li><a href="upload.html">Upload</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="contact_help.html">Contact & Help</a></li>
+    <li><a href="#" onclick="openDashboard()">Dashboard →</a></li>
   </ul>
+
+  <button class="logout-btn" onclick="logout()">Logout</button>
 
   <select id="languageSwitcher">
     <option value="en">English</option>
@@ -166,183 +158,103 @@
   </select>
 </nav>
 
-<!-- Main Content -->
+<!-- Page Content -->
 <div class="container">
-  <h1 data-en="Smart Baby Rash Detector" data-kn="ಸ್ಮಾರ್ಟ್ ಬೇಬಿ ರಾಶ್ ಡಿಟೆಕ್ಟರ್">Smart Baby Rash Detector</h1>
+  <h1>Smart Baby Rash Detector</h1>
 
   <div class="upload-section">
 
     <!-- Upload Box -->
     <div class="upload-box">
-      <h2 data-en="Upload Image" data-kn="ಚಿತ್ರವನ್ನು ಅಪ್ಲೋಡ್ ಮಾಡಿ">Upload Image</h2>
+      <h2>Upload Image</h2>
 
       <input type="file" accept="image/*" id="imageInput">
 
       <div style="margin-top:10px;">
-        <button id="openCameraButton" data-en="Use Camera" data-kn="ಕ್ಯಾಮೆರಾ ಬಳಸಿ">Use Camera</button>
-        <button id="checkRashButton" data-en="Check Rash" data-kn="ರಾಶ್ ಪರಿಶೀಲಿಸಿ">Check Rash</button>
+        <button id="openCameraButton">Use Camera</button>
+        <button id="checkRashButton">Check Rash</button>
       </div>
     </div>
 
     <!-- Preview -->
     <div class="preview-box" id="previewBox" style="display:none;">
-      <h2 data-en="Image Preview" data-kn="ಚಿತ್ರದ ಪೂರ್ವದೃಶ್ಯ">Image Preview</h2>
+      <h2>Image Preview</h2>
       <img id="previewImage" src="">
     </div>
 
     <!-- Result -->
     <div class="result-box" id="resultBox" style="display:none;">
-      <h2 data-en="Prediction" data-kn="ಅನುಮಾನ">Prediction</h2>
+      <h2>Prediction Result</h2>
 
       <ul>
         <li><strong>Rash Type:</strong> <span id="rashType">-</span></li>
         <li><strong>Confidence:</strong> <span id="confidence">-</span></li>
-        <li><strong>Care Tips:</strong></li>
       </ul>
 
+      <h3>Care Tips:</h3>
       <ul id="careTipsList"></ul>
 
-      <button id="consultDoctorBtn" style="display:none;"
-        data-en="Consult a Doctor"
-        data-kn="ಡಾಕ್ಟರ್ ಅನ್ನು ಸಂಪರ್ಕಿಸಿ">
-        Consult a Doctor
-      </button>
+      <button id="consultDoctorBtn" style="display:none;">Consult a Doctor</button>
     </div>
 
   </div>
 </div>
 
 <!-- Camera Modal -->
-<div class="camera-modal" id="cameraModal">
-  <div class="camera-card">
-    <video id="cameraVideo" autoplay playsinline></video>
-    <div class="camera-controls">
-      <button id="captureButton" data-en="Capture" data-kn="ಕ್ಯಾಪ್ಚರ್">Capture</button>
-      <button id="closeCameraButton" data-en="Close" data-kn="ಮುಚ್ಚಿರಿ">Close</button>
+<div class="camera-modal" id="cameraModal" style="
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  display:none; align-items:center; justify-content:center;">
+  <div class="camera-card" style="background:white; padding:12px; border-radius:8px; width:90%; max-width:480px;">
+    <video id="cameraVideo" autoplay></video>
+    <div class="camera-controls" style="margin-top:10px;">
+      <button id="captureButton">Capture</button>
+      <button id="closeCameraButton">Close</button>
     </div>
-    <canvas id="captureCanvas" class="hidden-canvas"></canvas>
+    <canvas id="captureCanvas" style="display:none;"></canvas>
   </div>
 </div>
 
 <!-- SCRIPT -->
 <script>
-  const BACKEND_URL = "http://127.0.0.1:5000";
+  const BACKEND_URL = "http://127.0.0.1:5500";
 
-  /* NAVBAR TOGGLE */
-  const menuIcon = document.getElementById('menuIcon');
-  const menuItems = document.getElementById('menuItems');
+  /* Dashboard */
+  function openDashboard() {
+    const role = localStorage.getItem("role");
+    if (role === "parent") window.location.href = "parent_dashboard.html";
+    else if (role === "doctor") window.location.href = "doctor_dashboard.html";
+    else alert("Please login first!");
+  }
 
-  menuIcon.addEventListener('click', () => {
-    menuItems.style.display =
-      menuItems.style.display === 'block' ? 'none' : 'block';
+  /* Logout */
+  function logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    window.location.href = "login.html";
+  }
+
+  /* LANGUAGE SWITCHER */
+  const switcher = document.getElementById("languageSwitcher");
+  const savedLang = localStorage.getItem("lang") || "en";
+  switcher.value = savedLang;
+  switcher.addEventListener("change", () => {
+    localStorage.setItem("lang", switcher.value);
+    location.reload();
   });
 
   /* IMAGE PREVIEW */
   const imageInput = document.getElementById("imageInput");
-  const previewImage = document.getElementById("previewImage");
   const previewBox = document.getElementById("previewBox");
+  const previewImage = document.getElementById("previewImage");
 
   imageInput.addEventListener("change", () => {
     const file = imageInput.files[0];
     if (!file) return;
+
     previewImage.src = URL.createObjectURL(file);
     previewBox.style.display = "block";
   });
-
-  /* RASH PREDICTION */
-  const checkRashButton = document.getElementById("checkRashButton");
-  const resultBox = document.getElementById("resultBox");
-
-  const rashTypeEl = document.getElementById("rashType");
-  const confidenceEl = document.getElementById("confidence");
-  const careTipsList = document.getElementById("careTipsList");
-  const consultBtn = document.getElementById("consultDoctorBtn");
-
-  let lastRecordId = null;
-
-  checkRashButton.addEventListener("click", async () => {
-    if (!imageInput.files[0]) {
-      alert("Please upload an image first!");
-      return;
-    }
-
-    resultBox.style.display = "block";
-    checkRashButton.disabled = true;
-    checkRashButton.textContent = "Analyzing...";
-
-    try {
-      const lang = localStorage.getItem("lang") || "en";
-      const fd = new FormData();
-      fd.append("file", imageInput.files[0]);
-
-      const resp = await fetch(`${BACKEND_URL}/predict?lang=${lang}`, {
-        method: "POST",
-        body: fd
-      });
-
-      const data = await resp.json();
-
-      rashTypeEl.textContent = data.rash_type;
-      confidenceEl.textContent = data.confidence;
-
-      careTipsList.innerHTML = "";
-      data.care_tips.forEach(t => {
-        const li = document.createElement("li");
-        li.textContent = t;
-        careTipsList.appendChild(li);
-      });
-
-      lastRecordId = data.record_id;
-      consultBtn.style.display = "block";
-
-    } catch (err) {
-      alert("Prediction failed");
-    }
-
-    checkRashButton.disabled = false;
-    checkRashButton.textContent = checkRashButton.getAttribute("data-en");
-  });
-
-  /* CONSULT DOCTOR */
-  consultBtn.addEventListener("click", async () => {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      alert("Please login first!");
-      return;
-    }
-
-    const doctor_id = 2;
-
-    const res = await fetch(`${BACKEND_URL}/api/consultations/request`, {
-      method: "POST",
-      headers: {
-        "Authorization": "Bearer " + token,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ doctor_id, record_id: lastRecordId })
-    });
-
-    const data = await res.json();
-    alert(data.message);
-  });
-
-  /* LANGUAGE SWITCHER */
-  const switcher = document.getElementById("languageSwitcher");
-
-  function setLanguage(lang) {
-    document.querySelectorAll("[data-en]").forEach(el => {
-      el.textContent = el.getAttribute("data-" + lang);
-    });
-    localStorage.setItem("lang", lang);
-  }
-
-  const savedLang = localStorage.getItem("lang") || "en";
-  switcher.value = savedLang;
-  setLanguage(savedLang);
-
-  switcher.addEventListener("change", () => setLanguage(switcher.value));
 </script>
 
-<script src="./lang.js"></script>
 </body>
 </html>
