@@ -4,33 +4,71 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Login - Smart Baby Skin Care</title>
+
   <style>
     body{font-family:Arial,Helvetica,sans-serif;background:#e9f6fb}
-    .box{width:420px;margin:6% auto;padding:28px;border-radius:10px;background:#fff;box-shadow:0 6px 18px rgba(0,0,0,.08)}
+    .box{width:430px;margin:5% auto;padding:32px;border-radius:12px;background:#fff;
+         box-shadow:0 6px 18px rgba(0,0,0,.08)}
     input{width:100%;padding:12px;margin:10px 0;border-radius:6px;border:1px solid #ddd}
     button{width:100%;padding:12px;background:#37a64b;color:#fff;border:0;border-radius:6px;cursor:pointer}
+    .role-btns { display:flex; gap:10px; margin-bottom:15px; }
+    .role-btns button { flex:1; background:#008cff; }
+    .selected { background:#005bb5 !important; }
   </style>
 </head>
+
 <body>
   <div class="box">
+
     <h2 style="text-align:center;color:#3aa04f">Login</h2>
+
+    <!-- ROLE SELECTION BUTTONS -->
+    <div class="role-btns">
+      <button type="button" id="parentBtn">Login as Parent</button>
+      <button type="button" id="doctorBtn">Login as Doctor</button>
+    </div>
+
     <form id="loginForm">
       <input id="email" name="email" type="email" placeholder="Enter Email" required />
       <input id="password" name="password" type="password" placeholder="Enter Password" required />
       <button type="submit">Login</button>
     </form>
-    <p style="text-align:center;margin-top:12px;color:#666">Use same page for Parent & Doctor</p>
+
   </div>
 
   <script>
+    let selectedRole = null;
+
+    // --- ROLE BUTTON BEHAVIOR ---
+    document.getElementById("parentBtn").onclick = () => {
+      selectedRole = "parent";
+      setActive("parentBtn");
+    };
+
+    document.getElementById("doctorBtn").onclick = () => {
+      selectedRole = "doctor";
+      setActive("doctorBtn");
+    };
+
+    function setActive(id) {
+      document.getElementById("parentBtn").classList.remove("selected");
+      document.getElementById("doctorBtn").classList.remove("selected");
+      document.getElementById(id).classList.add("selected");
+    }
+
+    // --- LOGIN REQUEST ---
     document.getElementById('loginForm').addEventListener('submit', async function(e){
       e.preventDefault();
+
+      if (!selectedRole) {
+        alert("Please select Login as Parent or Login as Doctor");
+        return;
+      }
 
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
 
       try {
-        // Correct backend URL → Flask API is on port 5000
         const res = await fetch("http://127.0.0.1:5000/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -40,24 +78,28 @@
         const data = await res.json();
 
         if (!res.ok) {
-          alert(data.error || data.message || "Login failed");
-          console.warn("Login failed:", data);
+          alert(data.error || "Login failed");
           return;
         }
 
-        // Save token & user details
-        localStorage.setItem("token", data.access_token);
-        localStorage.setItem("access_token", data.access_token);
-        localStorage.setItem("role", data.role || "");
-        localStorage.setItem("user_id", data.user_id || "");
-        localStorage.setItem("full_name", data.full_name || "");
+        // Check role mismatch
+        if (data.role !== selectedRole) {
+          alert(`You must login as a ${data.role}, not as ${selectedRole}.`);
+          return;
+        }
 
-        // Redirect to home page (absolute path)
+        // Save login info
+        localStorage.setItem("token", data.access_token);
+        localStorage.setItem("role", data.role);
+        localStorage.setItem("user_id", data.user_id);
+        localStorage.setItem("full_name", data.full_name);
+
+        // redirect
         window.location.href = "/home.html";
 
       } catch (err) {
         console.error(err);
-        alert("Network error — check if backend server is running on port 5500");
+        alert("Network error — check backend");
       }
     });
   </script>
