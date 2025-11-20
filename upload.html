@@ -282,6 +282,73 @@
   const previewBox = document.getElementById("previewBox");
   const previewImage = document.getElementById("previewImage");
 
+  // CAMERA ELEMENTS & LOGIC
+  const openCameraButton = document.getElementById('openCameraButton');
+  const cameraModal = document.getElementById('cameraModal');
+  const cameraVideo = document.getElementById('cameraVideo');
+  const captureButton = document.getElementById('captureButton');
+  const closeCameraButton = document.getElementById('closeCameraButton');
+  const captureCanvas = document.getElementById('captureCanvas');
+  let cameraStream = null;
+  window.capturedImageBlob = null; // global fallback for prediction
+
+  async function startCamera(){
+    try {
+      // Prefer rear camera on mobile if available
+      const constraints = { video: { facingMode: { ideal: 'environment' } }, audio: false };
+      cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+      cameraVideo.srcObject = cameraStream;
+      cameraModal.style.display = 'flex';
+    } catch(err){
+      console.error('Camera access failed', err);
+      alert('Unable to access camera: ' + (err.message || err.name));
+    }
+  }
+
+  function stopCamera(){
+    if (cameraStream){
+      cameraStream.getTracks().forEach(t => t.stop());
+      cameraStream = null;
+    }
+    cameraVideo.srcObject = null;
+  }
+
+  openCameraButton.addEventListener('click', () => {
+    startCamera();
+  });
+
+  closeCameraButton.addEventListener('click', () => {
+    stopCamera();
+    cameraModal.style.display = 'none';
+  });
+
+  captureButton.addEventListener('click', () => {
+    if (!cameraStream){
+      alert('Camera not active');
+      return;
+    }
+    const videoTrack = cameraStream.getVideoTracks()[0];
+    const settings = videoTrack.getSettings();
+    const w = settings.width || cameraVideo.videoWidth || 640;
+    const h = settings.height || cameraVideo.videoHeight || 480;
+    captureCanvas.width = w;
+    captureCanvas.height = h;
+    const ctx = captureCanvas.getContext('2d');
+    ctx.drawImage(cameraVideo, 0, 0, w, h);
+    const dataUrl = captureCanvas.toDataURL('image/png');
+    previewImage.src = dataUrl;
+    previewBox.style.display = 'block';
+    try { localStorage.setItem('lastPreviewImage', dataUrl); } catch(e){ console.warn('Failed to store preview', e); }
+    // Convert to blob for prediction
+    fetch(dataUrl)
+      .then(r => r.blob())
+      .then(blob => { window.capturedImageBlob = blob; })
+      .catch(e => console.warn('Blob conversion failed', e));
+    // Close camera
+    stopCamera();
+    cameraModal.style.display = 'none';
+  });
+
   imageInput.addEventListener("change", () => {
     const file = imageInput.files[0];
     if (!file) return;
@@ -339,8 +406,11 @@
   } catch(e) { console.warn('Failed to restore cached prediction', e); }
 
   checkRashButton.addEventListener('click', async () => {
-    const file = imageInput.files[0];
-    if (!file) { alert('Please choose an image first'); return; }
+    let file = imageInput.files[0];
+    if (!file && window.capturedImageBlob){
+      file = new File([window.capturedImageBlob], 'captured.png', { type: 'image/png' });
+    }
+    if (!file) { alert('Please choose or capture an image first'); return; }
 
     checkRashButton.disabled = true;
     const prevText = checkRashButton.textContent;
