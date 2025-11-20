@@ -109,6 +109,26 @@ def create_app():
             "labels": app.class_names
         })
 
+    # ------------------ SECURITY HEADERS ------------------
+    @app.after_request
+    def add_security_headers(resp):
+        # Central Content Security Policy (no unsafe-eval)
+        resp.headers['Content-Security-Policy'] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data: blob:; "
+            "font-src 'self' data:; "
+            "connect-src 'self'; "
+            "object-src 'none'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'"
+        )
+        # Additional hardening headers
+        resp.headers.setdefault('X-Content-Type-Options', 'nosniff')
+        resp.headers.setdefault('X-Frame-Options', 'SAMEORIGIN')
+        resp.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
+        resp.headers.setdefault('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+        return resp
+
     @app.route("/instance/uploads/<path:filename>")
     def file(filename):
         return send_from_directory(app.uploads_path, filename)
@@ -137,4 +157,4 @@ def create_app():
 # -------------------------------------------------------------
 if __name__ == "__main__":
     application = create_app()
-    application.run(debug=True, port=5500)
+    application.run(debug=True, port=5000)

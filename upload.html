@@ -91,20 +91,30 @@
 
     .upload-section {
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       align-items: flex-start;
-      flex-wrap: wrap;
+      gap: 40px;
+      flex-wrap: nowrap;
+      margin-top: 10px;
     }
 
     .upload-box, .preview-box, .result-box {
-      width: 30%;
+      flex: 0 0 340px;
       background-color: #f9f9f9;
       border-radius: 10px;
-      padding: 15px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      margin: 10px;
-      min-width: 280px;
+      padding: 18px 18px 26px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+      margin: 10px 0;
+      min-width: 300px;
+      position: relative;
     }
+
+    @media (max-width: 1150px) {
+      .upload-section { flex-wrap: wrap; }
+      .upload-box, .preview-box, .result-box { flex: 1 1 320px; }
+    }
+
+    .result-box.persist-visible { display: block !important; }
 
     .upload-box button {
       margin-top: 10px;
@@ -193,6 +203,10 @@
 
       <h3>Care Tips:</h3>
       <ul id="careTipsList"></ul>
+      <h3>Prevention:</h3>
+      <ul id="preventionList"></ul>
+      <h3>Consult Doctor If:</h3>
+      <ul id="doctorIfList"></ul>
 
       <button id="consultDoctorBtn" style="display:none;">Consult a Doctor</button>
     </div>
@@ -216,7 +230,7 @@
 
 <!-- SCRIPT -->
 <script>
-  const BACKEND_URL = "http://127.0.0.1:5500";
+  const BACKEND_URL = "http://127.0.0.1:5000";
 
   /* Dashboard */
   function openDashboard() {
@@ -239,7 +253,7 @@
   switcher.value = savedLang;
   switcher.addEventListener("change", () => {
     localStorage.setItem("lang", switcher.value);
-    location.reload();
+    // Avoid full page reload so prediction result persists.
   });
 
   /* IMAGE PREVIEW */
@@ -250,9 +264,189 @@
   imageInput.addEventListener("change", () => {
     const file = imageInput.files[0];
     if (!file) return;
+    // Use DataURL so preview can persist across refresh & prediction cycles
+    const reader = new FileReader();
+    reader.onload = e => {
+      const dataUrl = e.target.result;
+      previewImage.src = dataUrl;
+      previewBox.style.display = "block";
+      try { localStorage.setItem('lastPreviewImage', dataUrl); } catch(err) { console.warn('Cache preview failed', err); }
+    };
+    reader.readAsDataURL(file);
+  });
 
-    previewImage.src = URL.createObjectURL(file);
-    previewBox.style.display = "block";
+  /* PREDICTION: send image to backend /predict */
+  const checkRashButton = document.getElementById('checkRashButton');
+  const resultBox = document.getElementById('resultBox');
+  const rashTypeEl = document.getElementById('rashType');
+  const confidenceEl = document.getElementById('confidence');
+  const careTipsList = document.getElementById('careTipsList');
+  const preventionList = document.getElementById('preventionList');
+  const doctorIfList = document.getElementById('doctorIfList');
+  const consultDoctorBtn = document.getElementById('consultDoctorBtn');
+
+  // Rehydrate previous prediction (if any) so it stays visible after incidental reloads
+  try {
+    // Restore preview image if cached
+    const cachedImg = localStorage.getItem('lastPreviewImage');
+    if (cachedImg) {
+      previewImage.src = cachedImg;
+      previewBox.style.display = 'block';
+    }
+    const cached = localStorage.getItem('lastPrediction');
+    if (cached) {
+      const data = JSON.parse(cached);
+      if (data && data.rash_type) {
+        rashTypeEl.textContent = data.rash_type;
+        confidenceEl.textContent = data.confidence_display || '-';
+        careTipsList.innerHTML = '';
+        preventionList.innerHTML = '';
+        doctorIfList.innerHTML = '';
+        (data.care_tips || []).forEach(t => { const li = document.createElement('li'); li.textContent = t; careTipsList.appendChild(li); });
+        (data.prevention_tips || []).forEach(t => { const li = document.createElement('li'); li.textContent = t; preventionList.appendChild(li); });
+        (data.consult_doctor_if || []).forEach(t => { const li = document.createElement('li'); li.textContent = t; doctorIfList.appendChild(li); });
+        if ((data.care_tips || []).length === 0) { const li = document.createElement('li'); li.textContent = 'No care tips available'; careTipsList.appendChild(li); }
+        if ((data.prevention_tips || []).length === 0) { const li = document.createElement('li'); li.textContent = 'No prevention tips available'; preventionList.appendChild(li); }
+        if ((data.consult_doctor_if || []).length === 0) { const li = document.createElement('li'); li.textContent = 'No consultation guidance'; doctorIfList.appendChild(li); }
+        if (data.record_id) { consultDoctorBtn.style.display = 'inline-block'; consultDoctorBtn.dataset.recordId = data.record_id; }
+        resultBox.style.display = 'block';
+        resultBox.classList.add('persist-visible');
+      }
+    }
+  } catch(e) { console.warn('Failed to restore cached prediction', e); }
+
+  checkRashButton.addEventListener('click', async () => {
+    const file = imageInput.files[0];
+    if (!file) { alert('Please choose an image first'); return; }
+
+    checkRashButton.disabled = true;
+    const prevText = checkRashButton.textContent;
+    checkRashButton.textContent = 'Analyzing...';
+
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+
+      const lang = localStorage.getItem('lang') || 'en';
+      const res = await fetch(`${BACKEND_URL}/predict?lang=${encodeURIComponent(lang)}`, {
+        method: 'POST',
+        body: fd
+      });
+
+      if (!res.ok) {
+        let errMsg = `Server returned ${res.status}`;
+        try { const j = await res.json(); if (j && j.error) errMsg = j.error; } catch(e){}
+        throw new Error(errMsg);
+      }
+
+      const data = await res.json();
+
+      // Defensive: map response fields
+      const type = data.rash_type || data.label || 'unknown';
+      let conf = data.confidence ?? data.confidence_raw ?? data.score ?? 0;
+      // Normalize confidence to percent (0-100)
+      if (conf <= 1) conf = conf * 100;
+      rashTypeEl.textContent = type;
+      confidenceEl.textContent = `${conf.toFixed(2)}%`;
+
+      careTipsList.innerHTML = '';
+      preventionList.innerHTML = '';
+      doctorIfList.innerHTML = '';
+      const tips = Array.isArray(data.care_tips) ? data.care_tips : (data.tips || []);
+      const prevs = Array.isArray(data.prevention_tips) ? data.prevention_tips : [];
+      const docIf = Array.isArray(data.consult_doctor_if) ? data.consult_doctor_if : [];
+      (tips).forEach(t => { const li = document.createElement('li'); li.textContent = t; careTipsList.appendChild(li); });
+      (prevs).forEach(t => { const li = document.createElement('li'); li.textContent = t; preventionList.appendChild(li); });
+      (docIf).forEach(t => { const li = document.createElement('li'); li.textContent = t; doctorIfList.appendChild(li); });
+      if (tips.length === 0) { const li = document.createElement('li'); li.textContent = 'No care tips available'; careTipsList.appendChild(li); }
+      if (prevs.length === 0) { const li = document.createElement('li'); li.textContent = 'No prevention tips available'; preventionList.appendChild(li); }
+      if (docIf.length === 0) { const li = document.createElement('li'); li.textContent = 'No consultation guidance'; doctorIfList.appendChild(li); }
+
+      // Show consult button if record id present
+      if (data.record_id) {
+        consultDoctorBtn.style.display = 'inline-block';
+        consultDoctorBtn.dataset.recordId = data.record_id;
+      } else {
+        consultDoctorBtn.style.display = 'none';
+      }
+
+      // Show result (no timers, no auto-hide)
+      resultBox.style.display = 'block';
+      resultBox.classList.add('persist-visible');
+
+      // Cache for persistence
+      try {
+        localStorage.setItem('lastPrediction', JSON.stringify({
+          rash_type: type,
+          confidence_display: `${conf.toFixed(2)}%`,
+          care_tips: tips,
+          prevention_tips: prevs,
+          consult_doctor_if: docIf,
+          record_id: data.record_id || null
+        }));
+      } catch(e) { console.warn('Failed to cache prediction', e); }
+
+      // Removed auto re-assert timeout per user request.
+
+    } catch (err) {
+      console.error(err);
+      alert('Prediction failed: ' + (err.message || 'unknown error'));
+    } finally {
+      checkRashButton.disabled = false;
+      checkRashButton.textContent = prevText;
+    }
+  });
+
+  // Remove any accidental hide attempts by other scripts
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && resultBox.classList.contains('persist-visible')) {
+      resultBox.style.display = 'block';
+    }
+  });
+
+  // Guard against external scripts hiding the result box
+  const observer = new MutationObserver(() => {
+    if (resultBox.classList.contains('persist-visible') && resultBox.style.display === 'none') {
+      resultBox.style.display = 'block';
+    }
+    if (previewBox.style.display === 'none' && previewImage.src) {
+      previewBox.style.display = 'block';
+    }
+  });
+  observer.observe(resultBox, { attributes: true, attributeFilter: ['style', 'class'] });
+  observer.observe(previewBox, { attributes: true, attributeFilter: ['style', 'class'] });
+
+  // OPTIONAL: Block Live Server auto reload (port 5501) so page does not refresh
+  (function disableLiveReload(){
+    if (location.port === '5501' && window.WebSocket) {
+      const OriginalWS = window.WebSocket;
+      window.WebSocket = function(url, protocols){
+        try {
+          if (url && /live|reload|sockjs|livereload/i.test(url)) {
+            console.log('Blocking live-reload websocket:', url);
+            return { readyState: 3, close(){}, send(){}, addEventListener(){}, removeEventListener(){}, onopen:null, onmessage:null, onerror:null, onclose:null };
+          }
+        } catch(e) {}
+        return new OriginalWS(url, protocols);
+      };
+    }
+  })();
+
+  // Consult doctor action (best-effort: will call API if logged in)
+  consultDoctorBtn.addEventListener('click', async () => {
+    const recId = consultDoctorBtn.dataset.recordId;
+    if (!recId) { alert('No record id available'); return; }
+    const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+    if (!token) { alert('Login required to request consultation'); return; }
+
+    try {
+      const body = { doctor_id: 2, record_id: parseInt(recId) };
+      const res = await fetch(`${BACKEND_URL}/api/consultations/request`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(body)
+      });
+      const j = await res.json();
+      alert(j.message || j.error || 'Request completed');
+    } catch (e) { console.error(e); alert('Consultation request failed'); }
   });
 </script>
 

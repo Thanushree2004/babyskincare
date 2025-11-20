@@ -3,202 +3,120 @@ import io
 import json
 import logging
 from datetime import datetime
-from PIL import Image
 from werkzeug.utils import secure_filename
 
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, url_for
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from extensions import db
 from models import SkinRecord, RashType, Baby
-
-import numpy as np
-
-# prefer tensorflow.keras for compatibility; fallback to keras if needed
-try:
-    from tensorflow.keras.models import load_model as tf_load_model
-except Exception:
-    try:
-        from keras.models import load_model as tf_load_model
-    except Exception:
-        tf_load_model = None
+from inference_utils import predict_image_bytes, load_model
 
 logger = logging.getLogger(__name__)
 predict_bp = Blueprint("predict_bp", __name__, url_prefix="/predict")
 
-MODEL = None
-CLASS_MAP = None
-IMG_SIZE = (224, 224)
-
-# Correct model path (same as app.py - project root)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "unified_model.keras")
-LABELS_PATH = os.path.join(BASE_DIR, "class_index_to_label.json")
-
-
 @predict_bp.before_app_request
 def ensure_upload_dir():
-    # reuse the app's uploads directory
     if hasattr(current_app, "uploads_path"):
         os.makedirs(current_app.uploads_path, exist_ok=True)
 
 
-# --------------------------------------------------
-# Load model + labels once (lazy)
-# --------------------------------------------------
-def load_model_and_labels():
-    global MODEL, CLASS_MAP
-
-    if MODEL is None:
-        if tf_load_model is None:
-            logger.error("No keras/tensorflow loader available")
-            raise RuntimeError("Model loader not available in environment")
-        if not os.path.exists(MODEL_PATH):
-            logger.warning("Model file not found at %s", MODEL_PATH)
-            raise FileNotFoundError("Model file not found")
-        try:
-            logger.info("Loading model from: %s", MODEL_PATH)
-            MODEL = tf_load_model(MODEL_PATH)
-            logger.info("Model loaded successfully")
-        except Exception as e:
-            logger.exception("Failed to load model")
-            raise
-
-    if CLASS_MAP is None:
-        if os.path.exists(LABELS_PATH):
-            try:
-                with open(LABELS_PATH, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                # data can be {"0": "label"} or {"label": 0}
-                # convert to index -> label
-                if all(str(k).isdigit() for k in data.keys()):
-                    CLASS_MAP = {int(k): v for k, v in data.items()}
-                else:
-                    # invert mapping label->index to index->label
-                    CLASS_MAP = {int(v): k for k, v in data.items()}
-            except Exception:
-                logger.exception("Failed to parse labels file; using defaults")
-                CLASS_MAP = {0: "class_0", 1: "class_1", 2: "class_2"}
-        else:
-            CLASS_MAP = {0: "class_0", 1: "class_1", 2: "class_2"}
-
-        logger.info("Labels loaded: %s", CLASS_MAP)
-
-    return MODEL, CLASS_MAP
+def _safe_int(v):
+    try:
+        return int(v)
+    except Exception:
+        return None
 
 
-# --------------------------------------------------
-# Preprocess image
-# --------------------------------------------------
-def preprocess_image(img_bytes):
-    img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-    img = img.resize(IMG_SIZE, Image.BICUBIC)
-    arr = np.array(img).astype("float32") / 255.0
-    arr = np.expand_dims(arr, axis=0)
-    return arr
-
-
-# --------------------------------------------------
-# PREDICT ENDPOINT
-# --------------------------------------------------
 @predict_bp.route("", methods=["POST"])
 @jwt_required(optional=True)
 def predict():
-    if "file" not in request.files:
-        return jsonify({"error": "Image file missing"}), 400
+    file = request.files.get("file") or request.files.get("image")
+    if not file:
+        return jsonify({"error": "file field missing"}), 400
 
-    file = request.files["file"]
-    baby_id = request.form.get("baby_id")
+    # baby_id optional now
+    baby_id_raw = request.form.get("baby_id")
+    baby_id = _safe_int(baby_id_raw) if baby_id_raw else None
+    baby = None
+    if baby_id is not None:
+        baby = Baby.query.get(baby_id)
+        if not baby:
+            logger.warning("Baby id %s not found; proceeding without DB record", baby_id)
+            baby_id = None
 
-    if not baby_id:
-        return jsonify({"error": "baby_id is required"}), 400
-
-    # ensure baby_id is integer
+    # Run prediction (EfficientNet preprocessing handled in helper)
     try:
-        baby_id_int = int(baby_id)
-    except Exception:
-        return jsonify({"error": "baby_id must be an integer"}), 400
-
-    # Validate baby exists
-    baby = Baby.query.get(baby_id_int)
-    if not baby:
-        return jsonify({"error": "Invalid baby ID"}), 400
-
-    # Load model + labels (handle missing model)
-    try:
-        model, class_map = load_model_and_labels()
+        result = predict_image_bytes(file)
+        label = result.get("rash_type", "unknown")
+        confidence_raw = result.get("confidence_raw", 0.0)
+        confidence_pct = round(confidence_raw * 100.0, 2)
     except FileNotFoundError:
-        return jsonify({"error": "Model file not found on server"}), 500
-    except RuntimeError as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Model file missing on server"}), 500
     except Exception as e:
-        logger.exception("Failed to prepare model/labels")
-        return jsonify({"error": "Model loading failed", "detail": str(e)}), 500
+        logger.exception("Inference failed")
+        return jsonify({"error": "Inference failed", "detail": str(e)}), 500
 
-    img_bytes = file.read()
-
-    # -------------------- Predict --------------------
+    # Care tips from DB if available (structured: home_care, prevention, doctor_if)
+    care_tips = []
+    prevention = []
+    doctor_if = []
     try:
-        x = preprocess_image(img_bytes)
-        preds = model.predict(x)
-        # handle different shapes
-        if preds.ndim == 2:
-            preds = preds[0]
-        top_idx = int(np.argmax(preds))
-        confidence = float(preds[top_idx]) * 100.0
-        label = class_map.get(top_idx, f"class_{top_idx}")
-    except Exception as e:
-        logger.exception("Prediction error")
-        return jsonify({"error": "Model prediction failed", "detail": str(e)}), 500
-
-    # ---------------- File Save ----------------------
-    fname = secure_filename(file.filename or "upload.jpg")
-    base, ext = os.path.splitext(fname)
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    final_name = f"{base}_{timestamp}{ext or '.jpg'}"
-
-    try:
-        with open(final_name, "wb") as f:
-            f.write(img_bytes)
-    except Exception:
-        logger.exception("Failed to save uploaded file")
-
-    # --------------- Care Tips From DB ---------------
-    care_tips = ["If uncertain, consult a pediatrician"]
-    try:
-        row = RashType.query.filter_by(name=label).first()
-        if row and row.care_tips:
+        rt = RashType.query.filter_by(name=label).first()
+        if rt and rt.care_tips:
             try:
-                parsed = json.loads(row.care_tips)
-                care_tips = parsed if isinstance(parsed, list) else [row.care_tips]
+                parsed = json.loads(rt.care_tips)
+                if isinstance(parsed, dict):
+                    care_tips = parsed.get("home_care", [])
+                    prevention = parsed.get("prevention", [])
+                    doctor_if = parsed.get("doctor_if", [])
+                elif isinstance(parsed, list):
+                    care_tips = parsed
             except Exception:
-                care_tips = row.care_tips.splitlines()
+                care_tips = rt.care_tips.splitlines()
     except Exception:
-        logger.exception("Failed to fetch care tips")
+        logger.warning("Care tips lookup failed", exc_info=True)
 
-    # --------------- Save record in DB ---------------
-    user_id = get_jwt_identity()  # may be None for anonymous
-
+    # Save file to uploads folder
+    fname = secure_filename(file.filename or "upload.jpg")
+    stem, ext = os.path.splitext(fname)
+    ts = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    final_name = f"{stem}_{ts}{ext or '.jpg'}"
+    save_path = os.path.join(current_app.uploads_path, final_name)
     try:
-        record = SkinRecord(
-            baby_id=baby_id_int,
-            created_by_id=user_id,
-            predicted_rash_type=label,
-            confidence_score=round(confidence, 2),
-            image_path=final_name
-        )
-
-        db.session.add(record)
-        db.session.commit()
+        file.stream.seek(0)
+        with open(save_path, "wb") as fh:
+            fh.write(file.read())
     except Exception:
-        logger.exception("Failed to save prediction record")
-        # continue without failing the entire request
+        logger.exception("Failed saving file")
 
-    # ---------------- Final Response -----------------
+    record_id = None
+    user_id = get_jwt_identity()
+    if baby_id is not None:
+        try:
+            rec = SkinRecord(
+                baby_id=baby_id,
+                created_by_id=user_id,
+                predicted_rash_type=label,
+                confidence_score=confidence_pct,
+                image_path=final_name
+            )
+            db.session.add(rec)
+            db.session.commit()
+            record_id = rec.id
+        except Exception:
+            logger.exception("DB save failed; continuing without record")
+
+    image_url = url_for("file", filename=final_name, _external=False)
+    logger.info("PREDICTION label=%s confidence=%.2f%% baby_id=%s record_id=%s", label, confidence_pct, baby_id, record_id)
+
     return jsonify({
         "rash_type": label,
-        "confidence": round(confidence, 2),
+        "confidence": confidence_pct,
         "care_tips": care_tips,
-        "record_id": getattr(record, "id", None),
-        "image_url": final_name
+        "prevention_tips": prevention,
+        "consult_doctor_if": doctor_if,
+        "record_id": record_id,
+        "image_url": image_url,
+        "probs": result.get("probs", {})
     }), 200
