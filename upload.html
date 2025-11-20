@@ -205,6 +205,9 @@
         <button id="openCameraButton" data-en="Use Camera" data-kn="ಕ್ಯಾಮರಾ ಬಳಸಿ">Use Camera</button>
         <button id="checkRashButton" data-en="Check Rash" data-kn="ರಾಶಿ ಪರಿಶೀಲನೆ">Check Rash</button>
       </div>
+      <div style="margin-top:8px;">
+        <button id="resetButton" data-en="Reset" data-kn="ಮರುಹೊಂದಿಸಿ" style="background:#d32f2f;">Reset</button>
+      </div>
     </div>
 
     <!-- Preview -->
@@ -373,6 +376,33 @@
   const preventionList = document.getElementById('preventionList');
   const doctorIfList = document.getElementById('doctorIfList');
   const consultDoctorBtn = document.getElementById('consultDoctorBtn');
+  const resetButton = document.getElementById('resetButton');
+
+  function resetAll(){
+    // Clear local storage caches
+    try { localStorage.removeItem('lastPreviewImage'); } catch(e){}
+    try { localStorage.removeItem('lastPrediction'); } catch(e){}
+    // Clear captured blob
+    window.capturedImageBlob = null;
+    // Reset file input
+    imageInput.value = '';
+    // Hide preview
+    previewImage.src = '';
+    previewBox.style.display = 'none';
+    // Clear tips lists
+    careTipsList.innerHTML = '';
+    preventionList.innerHTML = '';
+    doctorIfList.innerHTML = '';
+    consultDoctorBtn.style.display = 'none';
+    // Reset rash & confidence
+    rashTypeEl.textContent = '-';
+    confidenceEl.textContent = '-';
+    styleRashTab('-');
+    // Hide result box
+    resultBox.style.display = 'none';
+    resultBox.classList.remove('persist-visible');
+  }
+  resetButton.addEventListener('click', resetAll);
 
   // Rehydrate previous prediction (if any) so it stays visible after incidental reloads
   try {
