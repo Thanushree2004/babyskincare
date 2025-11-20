@@ -10,129 +10,96 @@ from models import RashType
 # Detailed structured tips: each entry includes home care, prevention, doctor consult triggers.
 RASH_TIPS = {
     "Candidiases": {
-        "home_care": [
-            "Keep affected area clean and dry; gently pat after washing.",
-            "Use mild, fragrance-free soap; avoid talc powders (can irritate).",
-            "Apply pediatrician-approved antifungal cream if previously prescribed only."],
-        "prevention": [
-            "Change diapers frequently (every 2-3 hours or when wet).",
-            "Air time: allow diaper-free periods to reduce moisture.",
-            "Avoid tight synthetic clothing; choose breathable cotton."],
-        "doctor_if": [
-            "Spreading redness or satellite pustules appear.",
-            "No improvement in 3-4 days of gentle care.",
-            "Fever or baby seems unusually irritable."]
+        "home_care": {
+            "en": [
+                "Keep affected area clean and dry; gently pat after washing.",
+                "Use mild, fragrance-free soap; avoid talc powders.",
+                "Apply antifungal cream only if doctor prescribed previously."],
+            "kn": [
+                "ಬಾಧಿತ ಭಾಗವನ್ನು ಸ್ವಚ್ಛವಾಗಿ ಒಣಗಿಸಿ; ಒರೆಸಿ ಒಣವಾಗಿರಿಸಿ.",
+                "ಸುಗಂಧರಹಿತ ಮೃದುವಾದ ಸಾಬೂನು ಬಳಸಿ; ಟಾಲ್ಕ್ ಪುಡಿ ತಪ್ಪಿಸಿ.",
+                "ಹಿಂದೆ ವೈದ್ಯರು ಸೂಚಿಸಿದರೆ ಮಾತ್ರ ಎಂಟಿಫಂಗಲ್ ಕ್ರೀಂ ಹಚ್ಚಿ."],
+        },
+        "prevention": {
+            "en": [
+                "Change diapers every 2–3 hours or when wet.",
+                "Give diaper‑free air time daily.",
+                "Use breathable cotton clothing; avoid tight synthetics."],
+            "kn": [
+                "ಹಾಡನ್ನು 2–3 ಗಂಟೆಗೆ ಒಮ್ಮೆ ಅಥವಾ ಒದ್ದೆಯಾಗುತ್ತಿದ್ದಂತೆ ಬದಲಿಸಿ.",
+                "ಪ್ರತಿದಿನ ಕೆಲವು ಸಮಯ ಡಯಪರ್ ಇಲ್ಲದೆ ಗಾಳಿಗೆ ಇರಿಸಿ.",
+                "ಉಸಿರಾಡುವ ಹತ್ತಿ ಬಟ್ಟೆ ಬಳಸಿ; ಬಿಗಿಯಾದ ಸಿಂಥಟಿಕ್ ತಪ್ಪಿಸಿ."],
+        },
+        "doctor_if": {
+            "en": ["Redness spreading with small satellite spots.", "No improvement in 3–4 days.", "Fever or unusual irritability."],
+            "kn": ["ಕೆಂಪು ವಿಸ್ತಾರವಾಗಿ ಸಣ್ಣ ಚುಕ್ಕೆಗಳು ಕಾಣಿಸಿದರೆ.", "3–4 ದಿನಗಳಲ್ಲಿ ಸುಧಾರಣೆ ಆಗದಿದ್ದರೆ.", "ಜ್ವರ ಅಥವಾ ಅಸಹಜ ಕಿರಿಕಿರಿ ಇದ್ದರೆ."]
+        }
     },
     "Chickenpox": {
-        "home_care": [
-            "Keep nails trimmed to reduce scratching infection risk.",
-            "Use lukewarm oatmeal baths for itch relief.",
-            "Offer plenty of fluids to prevent dehydration."],
-        "prevention": [
-            "Vaccination (if age-appropriate per pediatric schedule).",
-            "Isolate from non-immune children until all lesions scab.",
-            "Disinfect commonly touched objects gently."],
-        "doctor_if": [
-            "Breathing difficulty, persistent high fever, or lethargy.",
-            "Lesions become very red, swollen, or filled with yellow pus.",
-            "Dehydration signs: fewer wet diapers, dry mouth."]
+        "home_care": {
+            "en": ["Keep nails short to reduce scratching.", "Lukewarm oatmeal baths to soothe itching.", "Give plenty of fluids."],
+            "kn": ["ಗರಿಗಳು ಚಿಕ್ಕದಾಗಿರಲಿ; ಕೊರೆಯುವುದು ಕಡಿಮೆಯಾಗುತ್ತದೆ.", "ಇಚ್ಚೆ ಕಡಿಮೆ ಮಾಡಲು ಉಷ್ಣತೆ ಕಡಿಮೆ ಓಟ್ಸ್ ಸ್ನಾನ.", "ಹೇರಳವಾದ ದ್ರವ ನೀಡಿರಿ."],
+        },
+        "prevention": {"en": ["Vaccination when age appropriate.", "Keep child isolated till lesions scab.", "Clean commonly touched surfaces."],
+                        "kn": ["ವಯಸ್ಸಿಗೆ ತಕ್ಕಂತೆ ಲಸಿಕೆ ಹಾಕಿಸಿ.", "ಗಬ್ಬು ಬರುವವರೆಗೆ ಬೇರೆ ಮಕ್ಕಳಿಂದ ದೂರ ಇರಿಸಿ.", "ಮೆಚ್ಚಿನ ವಸ್ತುಗಳನ್ನು ಸ್ವಚ್ಛಗೊಳಿಸಿ."]},
+        "doctor_if": {"en": ["Breathing problems or persistent high fever.", "Lesions become swollen with yellow pus.", "Signs of dehydration."],
+                      "kn": ["ಶ್ವಾಸಕೋಶ ತೊಂದರೆ ಅಥವಾ ಉನ್ನತ ಜ್ವರ ಮುಂದುವರಿದರೆ.", "ಗಬ್ಬುಗಳು ಊದಿಕೊಂಡು ಹಳದಿ ಪು ಟ್ರಿಗರ್ ಆಗಿದರೆ.", "ದ್ರವ ಕ್ಷಯ ಲಕ್ಷಣಗಳು ಕಾಣಿಸಿದರೆ."]}
     },
     "HdMs": {
-        "home_care": [
-            "Keep skin moisturized with hypoallergenic lotion.",
-            "Avoid overheating: dress in light breathable layers.",
-            "Gently cleanse with lukewarm water; pat dry."],
-        "prevention": [
-            "Maintain cool ambient temperature (22–24°C).",
-            "Use cotton clothing; avoid rough seams.",
-            "Do not over-apply oils/lotions that occlude pores."],
-        "doctor_if": [
-            "Rash becomes painful or oozes.",
-            "Signs of infection (yellow crusts, warmth, swelling).",
-            "Baby develops fever or poor feeding."]
+        "home_care": {"en": ["Moisturize frequently.", "Avoid overheating; light layers.", "Cleanse gently; pat dry."],
+                       "kn": ["ಎಲ್ಲಾ ಸಮಯ ಮೃದು ಕ್ರೀಮ್ ಹಚ್ಚಿ.", "ಹೆಚ್ಚು ಬಿಸಿ ತಪ್ಪಿಸಿ; ತೆಳ್ಳನೆ ಪದರದ ಬಟ್ಟೆಗಳು.", "ಮೃದುವಾಗಿ ತೊಳೆಯಿರಿ; ನಾಜೂಕಾಗಿ ಒರೆಸಿ." ]},
+        "prevention": {"en": ["Cool room temperature 22–24°C.", "Use cotton clothing.", "Do not over‑apply oils."],
+                        "kn": ["ಕೊಠಡಿ ತಾಪಮಾನ ಶೀತ 22–24°C ಇರಲಿ.", "ಹತ್ತಿ ಬಟ್ಟೆ ಬಳಸಿರಿ.", "ಎಣ್ಣೆ ಹೆಚ್ಚು ಹಚ್ಚಬೇಡಿ."]},
+        "doctor_if": {"en": ["Pain, oozing or infection signs.", "Fever or poor feeding."],
+                      "kn": ["ನೋವು, ಹೊರಹರಿವು ಅಥವಾ ಸೋಂಕಿನ ಲಕ್ಷಣಗಳು.", "ಜ್ವರ ಅಥವಾ ತಿಂದುಕೊಳ್ಳದಿರುವುದು."]}
     },
     "Impetigo": {
-        "home_care": [
-            "Gently wash crusts with warm water; do not scrub.",
-            "Keep fingernails short; prevent scratching and spread.",
-            "Launder towels and clothes in hot water daily."],
-        "prevention": [
-            "Hand hygiene after touching lesions.",
-            "Do not share towels, bedding, or clothing.",
-            "Keep lesions covered loosely if possible."],
-        "doctor_if": [
-            "Multiple new lesions appear rapidly.",
-            "Fever, swollen lymph nodes, or spreading redness.",
-            "No improvement within 48 hours of prescribed treatment."]
+        "home_care": {"en": ["Gently remove crusts with warm water.", "Keep nails short.", "Wash towels/clothes daily."],
+                       "kn": ["ಬಿಸಿ ನೀರಿನಿಂದ ಮೃದುವಾಗಿ ಗರಿಗಳನ್ನು ತೆಗೆದುಹಾಕಿ.", "ಗರಿಗಳು ಚಿಕ್ಕದಿರಲಿ.", "ತೊವೆಗಳು ಮತ್ತು ಬಟ್ಟೆ ಪ್ರತಿದಿನ ತೊಳೆಯಿರಿ."]},
+        "prevention": {"en": ["Hand hygiene after touching lesions.", "Do not share towels or clothing.", "Cover lesions loosely."],
+                        "kn": ["ಗಬ್ಬು ಮುಟ್ಟಿದ ಮೇಲೆ ಕೈ ತೊಳೆಯಿರಿ.", "ತೊವೆಗಳು ಅಥವಾ ಬಟ್ಟೆ ಹಂಚಿಕೊಳ್ಳಬೇಡಿ.", "ಗಬ್ಬನ್ನು ಸಡಿಲವಾಗಿ ಮುಚ್ಚಿರಿ."]},
+        "doctor_if": {"en": ["Rapidly increasing lesions.", "Fever or swollen nodes.", "No improvement in 48h treatment."],
+                      "kn": ["ತ್ವರಿತವಾಗಿ ಹೆಚ್ಚುತ್ತಿರುವ ಗಬ್ಬುಗಳು.", "ಜ್ವರ ಅಥವಾ ಊದಿಕೊಂಡ ಲಿಂಫ್ ಗ್ಲಾಂಡ್.", "48 ಗಂಟೆಯ ಚಿಕಿತ್ಸೆಯಲ್ಲಿ ಸುಧಾರಣೆ ಇಲ್ಲ."]}
     },
     "Ringworm": {
-        "home_care": [
-            "Keep area clean and dry; wash gently once daily.",
-            "Use separate towel; launder after each use.",
-            "Avoid tight clothing occluding rash area."],
-        "prevention": [
-            "Do not share hats, brushes, or bedding.",
-            "Wash hands after pet contact; check pets for patches.",
-            "Keep skin folds dry; change sweaty clothes quickly."],
-        "doctor_if": [
-            "Lesion enlarges despite care.",
-            "Multiple circular lesions or scalp involvement.",
-            "Signs of secondary infection (pus, pain, heat)."]
+        "home_care": {"en": ["Keep area clean and dry.", "Separate towel; wash after use.", "Avoid tight clothing."],
+                       "kn": ["ಪ್ರದೇಶ ಸ್ವಚ್ಛ ಹಾಗೂ ಒಣವಾಗಿರಲಿ.", "ಪ್ರತ್ಯೇಕ ತೊವೆ ಬಳಸಿ; ಬಳಕೆಯ ನಂತರ ತೊಳೆಯಿರಿ.", "ಬಿಗಿಯಾದ ಬಟ್ಟೆ ತಪ್ಪಿಸಿ."]},
+        "prevention": {"en": ["Do not share hats or combs.", "Wash hands after pet contact.", "Dry skin folds quickly."],
+                        "kn": ["ಟೊಪ್ಪಿ ಅಥವಾ ಕಾಂಬ್ ಹಂಚಿಕೊಳ್ಳಬೇಡಿ.", "ಪಾಲು ಜೀವಿಯನ್ನು ಮುಟ್ಟಿದ ನಂತರ ಕೈ ತೊಳೆಯಿರಿ.", "ಚರ್ಮದ ಮಡಚುಗಳನ್ನು ಬೇಗ ಒಣಗಿಸಿ."]},
+        "doctor_if": {"en": ["Lesion enlarges.", "Multiple circular lesions.", "Pus or pain."],
+                      "kn": ["ಗಬ್ಬು ದೊಡ್ಡದಾಗಿದ್ರೆ.", "ಹಲವು ವೃತ್ತಾಕಾರದ ಗಬ್ಬುಗಳು.", "ಪು ಅಥವಾ ನೋವು." ]}
     },
     "diaper_rash": {
-        "home_care": [
-            "Change diapers promptly when wet or soiled.",
-            "Use thick barrier cream (zinc oxide) each change.",
-            "Allow diaper-free time several times daily."],
-        "prevention": [
-            "Avoid wipes with alcohol/fragrance; use warm water for severe flares.",
-            "Choose super-absorbent diapers that wick moisture.",
-            "Do not overtighten diaper (reduces airflow)."],
-        "doctor_if": [
-            "Open sores, bleeding, or pus.",
-            "Rash lasts >1 week or worsens despite care.",
-            "Fever or thrush signs (white patches in mouth)."]
+        "home_care": {"en": ["Change wet/soiled diapers promptly.", "Use thick zinc oxide barrier.", "Daily diaper‑free air time."],
+                       "kn": ["ಒದ್ದೆ/ಕಳೆದುಹೋದ ಡಯಪರ್ ತಕ್ಷಣ ಬದಲಾಯಿಸಿ.", "ದಪ್ಪ ಜಿಂಕ್ ಆಕ್ಸೈಡ್ ಕ್ರಮ ಬಳಸಿ.", "ಪ್ರತಿದಿನ ಸ್ವಲ್ಪ ಸಮಯ ಡಯಪರ್ ಇಲ್ಲದೆ ಇರಿಸಿ."]},
+        "prevention": {"en": ["Avoid alcohol/fragrance wipes.", "Use super absorbent diapers.", "Do not fasten too tightly."],
+                        "kn": ["ಆಲ್ಕೊಹಾಲ್/ಸುವಾಸನೆ ಇರುವ ವೈಪ್ಸ್ ತಪ್ಪಿಸಿ.", "ಹೆಚ್ಚು ಶೋಷಕ ಡಯಪರ್ ಬಳಸಿ.", "ಅತಿಯಾದ ಬಿಗಿಯಾಗಿ ಕಟ್ಟಬೇಡಿ."]},
+        "doctor_if": {"en": ["Open sores or pus.", "Rash >1 week or worsening.", "Fever or oral thrush."],
+                      "kn": ["ತೆರೆದ ಗಾಯಗಳು ಅಥವಾ ಪು.", "1 ವಾರಕ್ಕಿಂತ ಹೆಚ್ಚು ಅಥವಾ ಕೆಟ್ಟದಾದರೆ.", "ಜ್ವರ ಅಥವಾ ಬಾಯಲ್ಲಿ ಬಿಳಿ ಜಾಗ." ]}
     },
     "eczema_rash": {
-        "home_care": [
-            "Moisturize 2-3 times daily with fragrance-free cream.",
-            "Short lukewarm baths (5-10 min) then immediate moisturization.",
-            "Identify and reduce triggers (wool, harsh detergents)."],
-        "prevention": [
-            "Use gentle, dye-free detergents.",
-            "Maintain regular moisturization routine even when clear.",
-            "Keep room humidity moderate (40–50%)."],
-        "doctor_if": [
-            "Areas ooze yellow fluid or form painful crusts.",
-            "Sleep significantly disturbed due to itching.",
-            "No response to over-the-counter emollients in 1 week."]
+        "home_care": {"en": ["Moisturize 2–3 times daily.", "Short lukewarm baths then moisturize.", "Avoid harsh wool/detergents."],
+                       "kn": ["ದಿನಕ್ಕೆ 2–3 ಬಾರಿ ತೇವ ಕ್ರೀಂ ಹಚ್ಚಿ.", "ಚಿಕ್ಕ ಉಷ್ಣ ಸ್ನಾನ ನಂತರ ತೇವ ನೀಡಿರಿ.", "ಕಟುವಾದ ಉಣ್ಣೆ / ಡಿಟರ್ಜಂಟ್ ತಪ್ಪಿಸಿ."]},
+        "prevention": {"en": ["Use gentle dye‑free detergents.", "Maintain routine even when clear.", "Keep humidity 40–50%."],
+                        "kn": ["ಬಣ್ಣರಹಿತ ಮೃದುವಾದ ಡಿಟರ್ಜಂಟ್ ಬಳಸಿ.", "ರಾಷ್ ಇಲ್ಲದಿದ್ದರೂ ಕ್ರಮ ಮುಂದುವರಿಸಿ.", "ಆರ್ದ್ರತೆ 40–50% ಇರಲಿ."]},
+        "doctor_if": {"en": ["Yellow oozing or painful crusts.", "Sleep disturbed from itching.", "No improvement after 1 week care."],
+                      "kn": ["ಹಳದಿ ಹೊರಹರಿವು ಅಥವಾ ನೋವಿನ ಗರಿಗಳು.", "ಕೆರಿಕೆ ಕಾರಣ ನಿದ್ದೆ ಭಂಗ.", "1 ವಾರದ ಆರೈಕೆಯ ನಂತರ ಸುಧಾರಣೆ ಇಲ್ಲ."]}
     },
     "healthy": {
-        "home_care": [
-            "Continue gentle bathing and moisturizing routine.",
-            "Protect skin from excessive sun (shade, clothing)."],
-        "prevention": [
-            "Use mild fragrance-free products.",
-            "Maintain good hydration.",
-            "Regular diaper changes and breathable clothing."],
-        "doctor_if": [
-            "New rash forms suddenly.",
-            "Persistent dryness with cracking.",
-            "Any signs of pain or fever."]
+        "home_care": {"en": ["Continue gentle bathing & moisturizing.", "Protect from strong sun."],
+                       "kn": ["ಮೃದುವಾದ ಸ್ನಾನ ಮತ್ತು ತೇವ ಕ್ರಮ ಮುಂದುವರಿಸಿ.", "ತೀವ್ರ ಸೂರ್ಯನಿಂದ ರಕ್ಷಿಸಿರಿ."]},
+        "prevention": {"en": ["Use mild fragrance‑free products.", "Keep baby hydrated.", "Breathable clothing & regular diaper change."],
+                        "kn": ["ಮೃದುವಾದ ಸುವಾಸನೆ ರಹಿತ ಉತ್ಪನ್ನ ಬಳಸಿ.", "ಮಗುವಿಗೆ ಸಾಕಷ್ಟು ದ್ರವ.", "ಉಸಿರಾಡುವ ಬಟ್ಟೆ ಮತ್ತು ನಿಯಮಿತ ಡಯಪರ್ ಬದಲಾವಣೆ."]},
+        "doctor_if": {"en": ["Sudden new rash.", "Cracking dryness.", "Pain or fever signs."],
+                      "kn": ["ಹಠಾತ್ ಹೊಸ ರಾಶ್.", "ಒಡೆದ ಒಣತನ.", "ನೋವು ಅಥವಾ ಜ್ವರ ಲಕ್ಷಣಗಳು."]}
     },
     "heat_rash": {
-        "home_care": [
-            "Move baby to a cooler, ventilated area.",
-            "Light loose clothing; avoid occlusive creams.",
-            "Gently cool skin with lukewarm water (not ice)."],
-        "prevention": [
-            "Avoid overdressing; remove one layer if sweating.",
-            "Keep room temperature comfortable and not humid.",
-            "Promptly dry skin after bathing or sweating."],
-        "doctor_if": [
-            "Rash persists >3 days or worsens.",
-            "Blisters, pus, or spreading redness appear.",
-            "Baby shows fever or unusual fussiness."]
+        "home_care": {"en": ["Move to cooler ventilated area.", "Loose light clothing.", "Cool with lukewarm water."],
+                       "kn": ["ತಂಪಾದ ಗಾಳಿಯ ಸ್ಥಳಕ್ಕೆ ಕ್ಷೇತ್ರಾಂತರಿಸಿ.", "ಸಡಿಲ ಹಗುರ ಬಟ್ಟೆ.", "ಮಚ್ಚನ್ನು ಉಷ್ಣ ಕಡಿಮೆ ನೀರಿನಿಂದ ತಂಪಾಗಿಸಿ."]},
+        "prevention": {"en": ["Avoid overdressing.", "Comfortable room temperature not humid.", "Dry sweat quickly."],
+                        "kn": ["ಹೆಚ್ಚಾಗಿ ಬಟ್ಟೆ ಹಾಕಬೇಡಿ.", "ಕಡಿಮೆ ಆರ್ದ್ರತೆ ತಾಪಮಾನ.", "ಬೆವರು ಬೇಗ ಒರೆಸಿ."]},
+        "doctor_if": {"en": ["Rash >3 days or worse.", "Blisters, pus or spreading.", "Fever or unusual fussiness."],
+                      "kn": ["3 ದಿನಕ್ಕೂ ಹೆಚ್ಚು ಅಥವಾ ಕೆಟ್ಟದಾದರೆ.", "ಗುಳ್ಳೆಗಳು, ಪು ಅಥವಾ ವ್ಯಾಪಕವಾಗುತ್ತದೆ.", "ಜ್ವರ ಅಥವಾ ಅಸಹಜ ಕಿರಿಕಿರಿ."]}
     }
 }
 
@@ -145,7 +112,7 @@ def main():
                 "home_care": sections["home_care"],
                 "prevention": sections["prevention"],
                 "doctor_if": sections["doctor_if"]
-            })
+            }, ensure_ascii=False)
             if existing:
                 existing.care_tips = payload
             else:

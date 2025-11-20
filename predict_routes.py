@@ -57,7 +57,8 @@ def predict():
         logger.exception("Inference failed")
         return jsonify({"error": "Inference failed", "detail": str(e)}), 500
 
-    # Care tips from DB if available (structured: home_care, prevention, doctor_if)
+    # Care tips from DB if available (structured: home_care, prevention, doctor_if with optional language keys)
+    lang = request.args.get("lang", "en").lower()
     care_tips = []
     prevention = []
     doctor_if = []
@@ -67,9 +68,15 @@ def predict():
             try:
                 parsed = json.loads(rt.care_tips)
                 if isinstance(parsed, dict):
-                    care_tips = parsed.get("home_care", [])
-                    prevention = parsed.get("prevention", [])
-                    doctor_if = parsed.get("doctor_if", [])
+                    def pick(section):
+                        val = parsed.get(section, [])
+                        if isinstance(val, dict):
+                            # multilingual structure { 'en': [...], 'kn': [...] }
+                            return val.get(lang) or val.get("en") or []
+                        return val
+                    care_tips = pick("home_care")
+                    prevention = pick("prevention")
+                    doctor_if = pick("doctor_if")
                 elif isinstance(parsed, list):
                     care_tips = parsed
             except Exception:

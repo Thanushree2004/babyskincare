@@ -171,17 +171,17 @@
 
 <!-- FIXED NAVBAR -->
 <nav>
-  <div class="logo">👶 Baby Skin Care</div>
+  <div class="logo" data-en="👶 Baby Skin Care" data-kn="👶 ಬೇಬಿ ಸ್ಕಿನ್ ಕೇರ್">👶 Baby Skin Care</div>
 
   <ul class="nav-links">
-    <li><a href="home.html">Home</a></li>
-    <li><a href="upload.html">Upload</a></li>
-    <li><a href="about.html">About</a></li>
-    <li><a href="contact_help.html">Contact & Help</a></li>
-    <li><a href="#" onclick="openDashboard()">Dashboard →</a></li>
+    <li><a href="home.html" data-en="Home" data-kn="ಮುಖಪುಟ">Home</a></li>
+    <li><a href="upload.html" data-en="Upload" data-kn="ಅಪ್‌ಲೋಡ್">Upload</a></li>
+    <li><a href="about.html" data-en="About" data-kn="ಬಗ್ಗೆ">About</a></li>
+    <li><a href="contact_help.html" data-en="Contact & Help" data-kn="ಸಂಪರ್ಕ & ಸಹಾಯ">Contact & Help</a></li>
+    <li><a href="#" onclick="openDashboard()" data-en="Dashboard →" data-kn="ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ →">Dashboard →</a></li>
   </ul>
 
-  <button class="logout-btn" onclick="logout()">Logout</button>
+  <button class="logout-btn" onclick="logout()" data-en="Logout" data-kn="ಲಾಗ್‌ಔಟ್">Logout</button>
 
   <select id="languageSwitcher">
     <option value="en">English</option>
@@ -191,45 +191,45 @@
 
 <!-- Page Content -->
 <div class="container">
-  <h1>Smart Baby Rash Detector</h1>
+  <h1 data-en="Smart Baby Rash Detector" data-kn="ಸ್ಮಾರ್ಟ್ ಬೇಬಿ ರಾಶಿ ಪತ್ತೆಗಾರ">Smart Baby Rash Detector</h1>
 
   <div class="upload-section">
 
     <!-- Upload Box -->
     <div class="upload-box">
-      <h2>Upload Image</h2>
+      <h2 data-en="Upload Image" data-kn="ಚಿತ್ರವನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ">Upload Image</h2>
 
       <input type="file" accept="image/*" id="imageInput">
 
       <div style="margin-top:10px;">
-        <button id="openCameraButton">Use Camera</button>
-        <button id="checkRashButton">Check Rash</button>
+        <button id="openCameraButton" data-en="Use Camera" data-kn="ಕ್ಯಾಮರಾ ಬಳಸಿ">Use Camera</button>
+        <button id="checkRashButton" data-en="Check Rash" data-kn="ರಾಶಿ ಪರಿಶೀಲನೆ">Check Rash</button>
       </div>
     </div>
 
     <!-- Preview -->
     <div class="preview-box" id="previewBox" style="display:none;">
-      <h2>Image Preview</h2>
+      <h2 data-en="Image Preview" data-kn="ಚಿತ್ರ ಮುನ್ನೋಟ">Image Preview</h2>
       <img id="previewImage" src="">
     </div>
 
     <!-- Result -->
     <div class="result-box" id="resultBox" style="display:none;">
-      <h2>Prediction Result</h2>
+      <h2 data-en="Prediction Result" data-kn="ಅಂದಾಜು ಫಲಿತಾಂಶ">Prediction Result</h2>
 
       <div class="rash-display">
-        <div id="rashTab" class="rash-tab rash-other">Rash: <span id="rashType">-</span></div>
-        <div class="rash-confidence">Confidence: <span id="confidence">-</span></div>
+        <div id="rashTab" class="rash-tab rash-other" data-en-prefix="Rash" data-kn-prefix="ರಾಶಿ">Rash: <span id="rashType">-</span></div>
+        <div class="rash-confidence" data-en-prefix="Confidence" data-kn-prefix="ಭರವಸೆ ಪ್ರಮಾಣ">Confidence: <span id="confidence">-</span></div>
       </div>
 
-      <h3>Care Tips:</h3>
+      <h3 data-en="Care Tips:" data-kn="ಪೋಷಣೆ ಸಲಹೆಗಳು:">Care Tips:</h3>
       <ul id="careTipsList"></ul>
-      <h3>Prevention:</h3>
+      <h3 data-en="Prevention:" data-kn="ತಡೆಗಟ್ಟುವಿಕೆ:">Prevention:</h3>
       <ul id="preventionList"></ul>
-      <h3>Consult Doctor If:</h3>
+      <h3 data-en="Consult Doctor If:" data-kn="ಈ ಸಂದರ್ಭಗಳಲ್ಲಿ ವೈದ್ಯರನ್ನು ಸಂಪರ್ಕಿಸಿ:">Consult Doctor If:</h3>
       <ul id="doctorIfList"></ul>
 
-      <button id="consultDoctorBtn" style="display:none;">Consult a Doctor</button>
+      <button id="consultDoctorBtn" style="display:none;" data-en="Consult a Doctor" data-kn="ವೈದ್ಯರನ್ನು ಸಂಪರ್ಕಿಸಿ">Consult a Doctor</button>
     </div>
 
   </div>
@@ -440,7 +440,7 @@
   observer.observe(resultBox, { attributes: true, attributeFilter: ['style', 'class'] });
   observer.observe(previewBox, { attributes: true, attributeFilter: ['style', 'class'] });
 
-  // Apply soft tone style based on rash type
+  // Apply soft tone style based on rash type (localized prefix)
   function styleRashTab(type){
     const norm = (type || '').toLowerCase();
     rashTabEl.classList.remove('rash-healthy','rash-mild','rash-fungal','rash-infection','rash-other');
@@ -450,8 +450,39 @@
     else if (['ringworm','candidiases'].includes(norm)) cls = 'rash-fungal';
     else if (['impetigo','chickenpox'].includes(norm)) cls = 'rash-infection';
     rashTabEl.classList.add(cls);
-    rashTabEl.innerHTML = `Rash: <span id="rashType">${type}</span>`;
+    const lang = localStorage.getItem('lang') || 'en';
+    const lbl = lang === 'kn' ? 'ರಾಶಿ' : 'Rash';
+    rashTabEl.innerHTML = `${lbl}: <span id="rashType">${type}</span>`;
   }
+
+  // Language apply
+  function applyLanguage(lang){
+    document.querySelectorAll('[data-en]').forEach(el => {
+      const en = el.getAttribute('data-en');
+      const kn = el.getAttribute('data-kn');
+      el.textContent = (lang === 'kn' ? kn : en);
+    });
+    document.querySelectorAll('[data-en-prefix]').forEach(el => {
+      const en = el.getAttribute('data-en-prefix');
+      const kn = el.getAttribute('data-kn-prefix');
+      const base = (lang === 'kn' ? kn : en);
+      if (el.id === 'rashTab') {
+        const type = document.getElementById('rashType').textContent || '-';
+        el.innerHTML = `${base}: <span id="rashType">${type}</span>`;
+      } else if (el.classList.contains('rash-confidence')) {
+        const conf = document.getElementById('confidence').textContent || '-';
+        el.innerHTML = `${base}: <span id="confidence">${conf}</span>`;
+      }
+    });
+  }
+  // initial language
+  applyLanguage(savedLang);
+  switcher.addEventListener('change', () => {
+    const lang = switcher.value;
+    localStorage.setItem('lang', lang);
+    applyLanguage(lang);
+    styleRashTab(rashTypeEl.textContent || '-');
+  });
 
   // OPTIONAL: Block Live Server auto reload (port 5501) so page does not refresh
   (function disableLiveReload(){
