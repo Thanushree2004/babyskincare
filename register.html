@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Create Account - Smart Baby Skin Scanner</title>
+
+<style>
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    background: linear-gradient(135deg, #a3e8ff, #d4ffe2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: 0.4s ease-in-out;
+}
+
+.register-card {
+    width: 420px;
+    padding: 32px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 22px;
+    backdrop-filter: blur(14px);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    animation: fadeIn 0.9s ease forwards;
+    opacity: 0;
+}
+
+@keyframes fadeIn {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+h2 {
+    text-align: center;
+    color: #1f7a53;
+}
+
+input, select {
+    width: 100%;
+    padding: 13px;
+    margin: 10px 0;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    font-size: 15px;
+}
+
+button {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(90deg, #34a853, #4fd479);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    font-size: 18px;
+    margin-top: 10px;
+}
+
+button:hover {
+    transform: scale(1.05);
+}
+
+.back-link {
+    text-align: center;
+    margin-top: 12px;
+}
+
+.back-link a {
+    color: #0a67c7;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.back-link a:hover {
+    text-decoration: underline;
+}
+</style>
+</head>
+
+<body>
+
+<div class="register-card">
+    <h2>Create Account 👶💚</h2>
+
+    <form id="registerForm">
+        <input type="text" id="full_name" placeholder="Full Name" required>
+        <input type="email" id="email" placeholder="Email Address" required>
+        <input type="password" id="password" placeholder="Create Password" required>
+
+        <select id="role" required>
+            <option value="">Select Role</option>
+            <option value="parent">Parent</option>
+            <option value="doctor">Doctor</option>
+        </select>
+
+        <button type="submit">Create Account</button>
+    </form>
+
+    <div class="back-link">
+        <a href="/login.html">Already have an account? Login</a>
+    </div>
+</div>
+
+<script>
+document.getElementById("registerForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const full_name = document.getElementById("full_name").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const role = document.getElementById("role").value;
+
+    try {
+        const res = await fetch("http://127.0.0.1:5000/api/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ full_name, email, password, role })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            alert(data.error || "Registration failed");
+            return;
+        }
+
+        alert("Account created successfully!");
+        window.location.href = "/login.html";
+
+    } catch (err) {
+        alert("Network error");
+    }
+});
+</script>
+
+</body>
+</html>
