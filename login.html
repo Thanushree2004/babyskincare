@@ -256,10 +256,11 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
 
         // Redirect to separate dashboards
         if (data.role === "parent") {
-            window.location.href = "/parent-home.html";
-        } else {
-            window.location.href = "/doctor-home.html";
-        }
+    window.location.href = "/home.html";  // open your existing home
+} else {
+    window.location.href = "/doctor-home.html"; 
+}
+
 
     } catch (err) {
         alert("Network error");
