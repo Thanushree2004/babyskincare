@@ -116,6 +116,27 @@
 
     .result-box.persist-visible { display: block !important; }
 
+    /* Rash type tab styling */
+    .rash-display { margin: 10px 0 18px; }
+    .rash-tab {
+      display: inline-block;
+      padding: 10px 18px;
+      border-radius: 22px;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: .5px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+    .rash-confidence { margin-top: 8px; font-size: 15px; font-weight: 600; color:#2c3e50; }
+
+    /* Soft tone palettes */
+    .rash-healthy { background:#e7f9ed; color:#1b5e20; }
+    .rash-mild { background:#e6f3ff; color:#0d47a1; }
+    .rash-fungal { background:#f5e9ff; color:#4a148c; }
+    .rash-infection { background:#fdeaea; color:#b71c1c; }
+    .rash-other { background:#f2f2f2; color:#37474f; }
+
     .upload-box button {
       margin-top: 10px;
       padding: 8px 15px;
@@ -196,10 +217,10 @@
     <div class="result-box" id="resultBox" style="display:none;">
       <h2>Prediction Result</h2>
 
-      <ul>
-        <li><strong>Rash Type:</strong> <span id="rashType">-</span></li>
-        <li><strong>Confidence:</strong> <span id="confidence">-</span></li>
-      </ul>
+      <div class="rash-display">
+        <div id="rashTab" class="rash-tab rash-other">Rash: <span id="rashType">-</span></div>
+        <div class="rash-confidence">Confidence: <span id="confidence">-</span></div>
+      </div>
 
       <h3>Care Tips:</h3>
       <ul id="careTipsList"></ul>
@@ -279,6 +300,7 @@
   const checkRashButton = document.getElementById('checkRashButton');
   const resultBox = document.getElementById('resultBox');
   const rashTypeEl = document.getElementById('rashType');
+  const rashTabEl = document.getElementById('rashTab');
   const confidenceEl = document.getElementById('confidence');
   const careTipsList = document.getElementById('careTipsList');
   const preventionList = document.getElementById('preventionList');
@@ -298,6 +320,7 @@
       const data = JSON.parse(cached);
       if (data && data.rash_type) {
         rashTypeEl.textContent = data.rash_type;
+        styleRashTab(data.rash_type);
         confidenceEl.textContent = data.confidence_display || '-';
         careTipsList.innerHTML = '';
         preventionList.innerHTML = '';
@@ -348,6 +371,7 @@
       if (conf <= 1) conf = conf * 100;
       rashTypeEl.textContent = type;
       confidenceEl.textContent = `${conf.toFixed(2)}%`;
+      styleRashTab(type);
 
       careTipsList.innerHTML = '';
       preventionList.innerHTML = '';
@@ -415,6 +439,19 @@
   });
   observer.observe(resultBox, { attributes: true, attributeFilter: ['style', 'class'] });
   observer.observe(previewBox, { attributes: true, attributeFilter: ['style', 'class'] });
+
+  // Apply soft tone style based on rash type
+  function styleRashTab(type){
+    const norm = (type || '').toLowerCase();
+    rashTabEl.classList.remove('rash-healthy','rash-mild','rash-fungal','rash-infection','rash-other');
+    let cls = 'rash-other';
+    if (norm === 'healthy') cls = 'rash-healthy';
+    else if (['diaper_rash','heat_rash','eczema_rash'].includes(norm)) cls = 'rash-mild';
+    else if (['ringworm','candidiases'].includes(norm)) cls = 'rash-fungal';
+    else if (['impetigo','chickenpox'].includes(norm)) cls = 'rash-infection';
+    rashTabEl.classList.add(cls);
+    rashTabEl.innerHTML = `Rash: <span id="rashType">${type}</span>`;
+  }
 
   // OPTIONAL: Block Live Server auto reload (port 5501) so page does not refresh
   (function disableLiveReload(){
