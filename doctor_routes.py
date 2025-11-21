@@ -13,7 +13,8 @@ doctor_bp = Blueprint("doctor_bp", __name__, url_prefix="/api/doctor")
 @jwt_required()
 def get_profile():
     user_id = get_jwt_identity()
-    doctor = User.query.filter_by(id=user_id, role="doctor").first()
+    # role in DB may be capitalized
+    doctor = User.query.filter(User.id == user_id, User.role.in_(["doctor", "Doctor"])) .first()
 
     if not doctor:
         return jsonify({"error": "Doctor not found"}), 404
@@ -22,9 +23,10 @@ def get_profile():
         "id": doctor.id,
         "full_name": doctor.full_name,
         "email": doctor.email,
-        "phone": doctor.phone,
-        "profile_pic": doctor.profile_pic,
-        "specialization": doctor.role,  
+        "role": doctor.role.lower() if doctor.role else "doctor",
+        "specialization": getattr(doctor, "specialization", None),
+        "experience": getattr(doctor, "experience", None),
+        "bio": getattr(doctor, "bio", None),
         "created_at": doctor.created_at.strftime("%Y-%m-%d"),
     }), 200
 
@@ -36,17 +38,36 @@ def get_profile():
 @jwt_required()
 def update_profile():
     user_id = get_jwt_identity()
-    doctor = User.query.filter_by(id=user_id, role="doctor").first()
+    doctor = User.query.filter(User.id == user_id, User.role.in_(["doctor", "Doctor"])) .first()
 
     if not doctor:
         return jsonify({"error": "Doctor not found"}), 404
 
-    data = request.get_json()
+    data = request.get_json() or {}
 
     doctor.full_name = data.get("full_name", doctor.full_name)
-    doctor.phone = data.get("phone", doctor.phone)
     doctor.email = data.get("email", doctor.email)
+    if "specialization" in data:
+        doctor.specialization = data.get("specialization")
+    if "experience" in data:
+        try:
+            doctor.experience = int(data.get("experience")) if data.get("experience") is not None else doctor.experience
+        except (TypeError, ValueError):
+            return jsonify({"error": "experience must be an integer"}), 400
+    if "bio" in data:
+        doctor.bio = data.get("bio")
 
     db.session.commit()
 
-    return jsonify({"message": "Profile updated successfully!"}), 200
+    return jsonify({
+        "message": "Profile updated successfully!",
+        "profile": {
+            "id": doctor.id,
+            "full_name": doctor.full_name,
+            "email": doctor.email,
+            "role": doctor.role.lower() if doctor.role else "doctor",
+            "specialization": getattr(doctor, "specialization", None),
+            "experience": getattr(doctor, "experience", None),
+            "bio": getattr(doctor, "bio", None)
+        }
+    }), 200

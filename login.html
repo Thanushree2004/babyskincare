@@ -206,7 +206,7 @@ body.dark .dark-toggle {
 /* Role selection */
 let selectedRole = null;
 
-parentBtn.onclick = () => {
+parentBtn.onclick = () => {                     
     selectedRole = "parent";
     parentBtn.classList.add("selected");
     doctorBtn.classList.remove("selected");
@@ -258,7 +258,7 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
         if (data.role === "parent") {
     window.location.href = "/home.html";  // open your existing home
 } else {
-    window.location.href = "/doctor-home.html"; 
+    window.location.href = "/doctor_dashboard.html"; 
 }
 
 

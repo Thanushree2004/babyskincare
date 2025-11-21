@@ -6,6 +6,18 @@ from models import User, Consultation, SkinRecord, Baby
 consult_bp = Blueprint("consult_bp", __name__, url_prefix="/api/consultations")
 
 
+def _identity_int():
+    """Helper to convert JWT identity to int when possible.
+    Some JWT libraries may return the identity as a string; convert safely.
+    Returns None if conversion fails.
+    """
+    ident = get_jwt_identity()
+    try:
+        return int(ident)
+    except (TypeError, ValueError):
+        return None
+
+
 # ---------------------------------------------------------
 # 1️⃣ Parent Sends Consultation Request
 # ---------------------------------------------------------
@@ -16,7 +28,9 @@ def request_consultation():
 
     record_id = data.get("record_id")
     doctor_id = data.get("doctor_id")
-    parent_id = get_jwt_identity()
+    parent_id = _identity_int()
+    if parent_id is None:
+        return jsonify({"error": "Invalid user identity"}), 401
 
     if not record_id or not doctor_id:
         return jsonify({"error": "record_id and doctor_id required"}), 400
@@ -51,7 +65,9 @@ def request_consultation():
 @consult_bp.route("/doctor", methods=["GET"])
 @jwt_required()
 def doctor_requests():
-    doctor_id = get_jwt_identity()
+    doctor_id = _identity_int()
+    if doctor_id is None:
+        return jsonify({"error": "Invalid user identity"}), 401
 
     # Check if user is doctor
     doctor = User.query.get(doctor_id)
@@ -88,7 +104,9 @@ def doctor_requests():
 @jwt_required()
 def update_consultation(consult_id):
     data = request.get_json() or {}
-    doctor_id = get_jwt_identity()
+    doctor_id = _identity_int()
+    if doctor_id is None:
+        return jsonify({"error": "Invalid user identity"}), 401
 
     status = data.get("status")
     if status not in ["accepted", "rejected"]:
@@ -114,7 +132,9 @@ def update_consultation(consult_id):
 @consult_bp.route("/parent", methods=["GET"])
 @jwt_required()
 def parent_consultations():
-    parent_id = get_jwt_identity()
+    parent_id = _identity_int()
+    if parent_id is None:
+        return jsonify({"error": "Invalid user identity"}), 401
 
     requests = Consultation.query.filter_by(parent_id=parent_id).order_by(
         Consultation.requested_at.desc()
@@ -141,7 +161,9 @@ def parent_consultations():
 @consult_bp.route("/details/<int:record_id>", methods=["GET"])
 @jwt_required()
 def consultation_details(record_id):
-    doctor_id = get_jwt_identity()
+    doctor_id = _identity_int()
+    if doctor_id is None:
+        return jsonify({"error": "Invalid user identity"}), 401
 
     # Verify doctor has access
     consultation = Consultation.query.filter_by(

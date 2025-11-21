@@ -6,6 +6,62 @@ from models import Baby, SkinRecord, Consultation, User
 parent_bp = Blueprint("parent_bp", __name__, url_prefix="/api/parent")
 
 
+@parent_bp.route("/profile", methods=["GET"])
+@jwt_required()
+def get_profile():
+    identity = get_jwt_identity()
+    if identity is None:
+        return jsonify({"error": "Unauthorized"}), 401
+    try:
+        user_id = int(identity)
+    except Exception:
+        return jsonify({"error": "Invalid identity"}), 401
+
+    user = User.query.filter(User.id == user_id, User.role.in_(["parent", "Parent"])) .first()
+    if not user:
+        return jsonify({"error": "Profile not found"}), 404
+
+    profile = {"id": user.id, "full_name": user.full_name, "email": user.email}
+    # include any doctor-like fields if present (safe access)
+    if hasattr(user, 'phone'):
+        profile['phone'] = getattr(user, 'phone')
+
+    return jsonify({"user": profile}), 200
+
+
+@parent_bp.route("/profile", methods=["PUT"])
+@jwt_required()
+def update_profile():
+    identity = get_jwt_identity()
+    if identity is None:
+        return jsonify({"error": "Unauthorized"}), 401
+    try:
+        user_id = int(identity)
+    except Exception:
+        return jsonify({"error": "Invalid identity"}), 401
+
+    user = User.query.filter(User.id == user_id, User.role.in_(["parent", "Parent"])) .first()
+    if not user:
+        return jsonify({"error": "Profile not found"}), 404
+
+    data = request.get_json() or {}
+    # update allowed fields safely
+    if 'full_name' in data:
+        user.full_name = data.get('full_name') or user.full_name
+    if 'email' in data:
+        user.email = data.get('email') or user.email
+    # accept phone but only set if column exists
+    if 'phone' in data and hasattr(User, 'phone'):
+        try:
+            setattr(user, 'phone', data.get('phone'))
+        except Exception:
+            pass
+
+    db.session.commit()
+    return jsonify({"message": "Profile saved"}), 200
+
+
+
 @parent_bp.route("/dashboard", methods=["GET"])
 @jwt_required()
 def dashboard():

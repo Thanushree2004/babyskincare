@@ -212,6 +212,7 @@
       <section id="section_profile" class="card large" style="display:none;">
         <h1 data-en="My Profile" data-kn="ನನ್ನ ಪ್ರೊಫೈಲ್">My Profile</h1>
         <div id="profileArea" style="margin-top:12px"></div>
+        <div id="childrenArea" style="margin-top:12px"></div>
       </section>
 
     </main>
@@ -277,6 +278,9 @@ function showSection(section) {
   const navId = section === "history" ? "nav_history" : section === "doctors" ? "nav_doctors" : section === "profile" ? "nav_profile" : "nav_status";
   const navEl = document.getElementById(navId);
   if (navEl) navEl.classList.add("active");
+  // load hooks
+  if (section === 'history') loadBabies();
+  if (section === 'profile') loadParentProfile();
 }
 
 /* OPEN DASHBOARD (keeps compatibility) */
@@ -494,6 +498,115 @@ function showDoctorProfile(doc) {
 
     <div id="bookingFormContainer" style="margin-top:18px"></div>
   `;
+}
+
+/* Parent profile loader + children management */
+async function loadParentProfile(){
+  const area = document.getElementById('profileArea');
+  area.innerHTML = `<div class="muted">${currentLang==='en'?'Loading profile...':'ಪ್ರೊಫೈಲ್ ಅನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...'}</div>`;
+  try{
+    const profile = await apiFetch(`${BACKEND}/api/parent/profile`);
+    // Some backends may return user object or profile
+    const p = profile && profile.user ? profile.user : profile || {};
+    const nameVal = escapeHtml(p.full_name || p.first_name || '');
+    const phoneVal = escapeHtml(p.phone || '');
+    // If profile is empty, show empty form so parent can enter details
+    area.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <label data-en="Full name" data-kn="ಪೂರ್ಣ ಹೆಸರು">${currentLang==='en'?'Full name':'ಪೂರ್ಣ ಹೆಸರು'}</label>
+        <input id="parent_full_name" value="${nameVal}" style="padding:8px;border-radius:8px;border:1px solid #e6e9ef" />
+        <label data-en="Phone" data-kn="ದೂರವಾಣಿ">${currentLang==='en'?'Phone':'ದೂರವಾಣಿ'}</label>
+        <input id="parent_phone" value="${phoneVal}" style="padding:8px;border-radius:8px;border:1px solid #e6e9ef" />
+        <div style="display:flex;gap:8px">
+          <button class="btn" onclick="saveParentProfile()">${currentLang==='en'?'Save':'ಉಳಿಸಿ'}</button>
+          <button class="btn ghost" onclick="loadParentProfile()">${currentLang==='en'?'Reload':'ಮರುಲೋಡ್'}</button>
+        </div>
+        <div id="parentProfileMsg" class="muted"></div>
+      </div>
+    `;
+    // load children regardless (may be empty)
+    loadChildren();
+  } catch(e){
+    console.warn('parent profile not found or failed to fetch, showing empty form', e);
+    // show empty form to allow first-time save
+    area.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="muted">${currentLang==='en'?'No profile found. Please enter your details and Save.':'ಪ್ರೊಫೈಲ್ ಕಂಡುಬರಲಿಲ್ಲ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ವಿವರಗಳನ್ನು ನಮೂದಿಸಿ ಮತ್ತು ಉಳಿಸಿ.'}</div>
+        <label data-en="Full name" data-kn="ಪೂರ್ಣ ಹೆಸರು">${currentLang==='en'?'Full name':'ಪೂರ್ಣ ಹೆಸರು'}</label>
+        <input id="parent_full_name" value="" style="padding:8px;border-radius:8px;border:1px solid #e6e9ef" />
+        <label data-en="Phone" data-kn="ದೂರವಾಣಿ">${currentLang==='en'?'Phone':'ದೂರವಾಣಿ'}</label>
+        <input id="parent_phone" value="" style="padding:8px;border-radius:8px;border:1px solid #e6e9ef" />
+        <div style="display:flex;gap:8px">
+          <button class="btn" onclick="saveParentProfile()">${currentLang==='en'?'Save':'ಉಳಿಸಿ'}</button>
+          <button class="btn ghost" onclick="loadParentProfile()">${currentLang==='en'?'Reload':'ಮರುಲೋಡ್'}</button>
+        </div>
+        <div id="parentProfileMsg" class="muted"></div>
+      </div>
+    `;
+    loadChildren();
+  }
+}
+
+async function saveParentProfile(){
+  const payload = {
+    full_name: document.getElementById('parent_full_name').value.trim(),
+    phone: document.getElementById('parent_phone').value.trim()
+  };
+  const msgEl = document.getElementById('parentProfileMsg');
+  try{
+    const res = await apiFetch(`${BACKEND}/api/parent/profile`, { method: 'PUT', body: JSON.stringify(payload), headers: { 'Content-Type': 'application/json' } });
+    msgEl.textContent = res.message || (currentLang==='en'?'Saved':'ಉಳಿಸಲಾಗಿದೆ');
+    // update UI name
+    document.getElementById('userName').textContent = payload.full_name || document.getElementById('userName').textContent;
+  } catch(e){
+    console.error(e);
+    msgEl.textContent = currentLang==='en'? 'Save failed' : 'ಉಳಿಸಲು ವಿಫಲವಾಗಿದೆ';
+  }
+}
+
+async function loadChildren(){
+  const area = document.getElementById('childrenArea');
+  area.innerHTML = `<h3 data-en="Your Children" data-kn="ನಿಮ್ಮ ಮಕ್ಕಳ">${currentLang==='en'?'Your Children':'ನಿಮ್ಮ ಮಕ್ಕಳ'}</h3>`;
+  try{
+    const res = await apiFetch(`${BACKEND}/api/babies/${userId}`);
+    const list = Array.isArray(res) ? res : (res.babies || []);
+    let html = `<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">`;
+    list.forEach(b => {
+      html += `<div class="baby-row"><div><strong>${escapeHtml(b.name)}</strong><div class="meta">${escapeHtml(b.date_of_birth || '')}</div></div></div>`;
+    });
+    html += `</div>`;
+    html += `
+      <div style="margin-top:12px;padding:12px;border-radius:8px;border:1px solid #eef3ff;background:#fbfdff">
+        <h4 data-en="Add Child" data-kn="ಮಕ್ಕಳನ್ನು ಸೇರಿಸಿ">${currentLang==='en'?'Add Child':'ಮಕ್ಕಳನ್ನು ಸೇರಿಸಿ'}</h4>
+        <input id="child_name" placeholder="Name" style="width:100%;padding:8px;border-radius:8px;border:1px solid #e6e9ef;margin-top:6px" />
+        <input id="child_dob" type="date" style="width:100%;padding:8px;border-radius:8px;border:1px solid #e6e9ef;margin-top:6px" />
+        <div style="margin-top:8px"><button class="btn" onclick="addChild()">${currentLang==='en'?'Add':'ಸೇರಿಸಿ'}</button></div>
+        <div id="childMsg" class="muted" style="margin-top:6px"></div>
+      </div>
+    `;
+    area.innerHTML = html;
+  } catch(e){
+    console.error(e);
+    area.innerHTML = `<div class="muted">${currentLang==='en'?'Failed to load children':'ಮಕ್ಕಳನ್ನು ಲೋಡ್ ಮಾಡಲು ವಿಫಲವಾಗಿದೆ'}</div>`;
+  }
+}
+
+async function addChild(){
+  const name = document.getElementById('child_name').value.trim();
+  const dob = document.getElementById('child_dob').value;
+  const msgEl = document.getElementById('childMsg');
+  if (!name || !dob) { msgEl.textContent = currentLang==='en' ? 'Please enter name and date of birth' : 'ದಯವಿಟ್ಟು ಹೆಸರು ಮತ್ತು ಜನನ ದಿನಾಂಕ ನಮೂದಿಸಿ'; return; }
+  try{
+    const payload = { parent_id: userId, name, date_of_birth: dob };
+    const res = await apiFetch(`${BACKEND}/api/babies`, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'application/json' } });
+    msgEl.textContent = res.message || (currentLang==='en'?'Child added':'ಮಗು ಸೇರಿಸಲಾಗಿದೆ');
+    // refresh list
+    await loadChildren();
+    await loadBabies();
+  } catch(e){
+    console.error(e);
+    msgEl.textContent = currentLang==='en' ? 'Add failed' : 'ಸೇರಿಸಲು ವಿಫಲವಾಗಿದೆ';
+  }
 }
 
 /* open booking form for a doctor */

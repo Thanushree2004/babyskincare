@@ -108,16 +108,24 @@ button:hover {
 document.getElementById("registerForm").addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const full_name = document.getElementById("full_name").value;
-    const email = document.getElementById("email").value;
+    const full_name = document.getElementById("full_name").value.trim();
+    const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
     const role = document.getElementById("role").value;
+
+    if (!role) {
+        alert("Please select Parent or Doctor.");
+        return;
+    }
+
+    // Normalize role to match backend ("Parent" / "Doctor")
+    const finalRole = role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
 
     try {
         const res = await fetch("http://127.0.0.1:5000/api/auth/register", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ full_name, email, password, role })
+            body: JSON.stringify({ full_name, email, password, role: finalRole })
         });
 
         const data = await res.json();

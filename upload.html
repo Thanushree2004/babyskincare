@@ -201,6 +201,13 @@
 
       <input type="file" accept="image/*" id="imageInput">
 
+      <div style="margin-top:10px; text-align:left">
+        <label for="babySelect" data-en="Save to Baby" data-kn="ಶಿಶುಕ್ಕೆ ಉಳಿಸಿ">Save to Baby (optional)</label>
+        <select id="babySelect" style="width:100%;padding:8px;border-radius:6px;margin-top:6px">
+          <option value="">-- Select baby (optional) --</option>
+        </select>
+      </div>
+
       <div style="margin-top:10px;">
         <button id="openCameraButton" data-en="Use Camera" data-kn="ಕ್ಯಾಮರಾ ಬಳಸಿ">Use Camera</button>
         <button id="checkRashButton" data-en="Check Rash" data-kn="ರಾಶಿ ಪರಿಶೀಲನೆ">Check Rash</button>
@@ -233,6 +240,7 @@
       <ul id="doctorIfList"></ul>
 
       <button id="consultDoctorBtn" style="display:none;" data-en="Consult a Doctor" data-kn="ವೈದ್ಯರನ್ನು ಸಂಪರ್ಕಿಸಿ">Consult a Doctor</button>
+      <div id="saveStatus" class="muted" style="margin-top:8px"></div>
     </div>
 
   </div>
@@ -255,6 +263,28 @@
 <!-- SCRIPT -->
 <script>
   const BACKEND_URL = "http://127.0.0.1:5000";
+
+  // baby select data (id -> name)
+  let uploadBabies = [];
+
+  async function loadBabiesForUpload(){
+    const sel = document.getElementById('babySelect');
+    sel.innerHTML = `<option value="">-- Select baby (optional) --</option>`;
+    const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+    if (!token) return; // not logged in or guest
+    try {
+      // Note: include trailing slash to avoid Flask redirect (preflight failures)
+      const res = await fetch(`${BACKEND_URL}/api/babies/`, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (!res.ok) return;
+      const data = await res.json();
+      uploadBabies = Array.isArray(data) ? data : [];
+      uploadBabies.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.id; opt.text = b.name || (`Baby ${b.id}`);
+        sel.appendChild(opt);
+      });
+    } catch (e) { console.warn('Failed to load babies for upload', e); }
+  }
 
   /* Dashboard */
   function openDashboard() {
@@ -435,6 +465,9 @@
     }
   } catch(e) { console.warn('Failed to restore cached prediction', e); }
 
+  // load babies (if logged in) so user can save prediction to a baby
+  loadBabiesForUpload();
+
   checkRashButton.addEventListener('click', async () => {
     let file = imageInput.files[0];
     if (!file && window.capturedImageBlob){
@@ -449,11 +482,18 @@
     try {
       const fd = new FormData();
       fd.append('file', file);
+      // include baby_id if selected so backend will persist SkinRecord
+      const babySel = document.getElementById('babySelect');
+      if (babySel && babySel.value) fd.append('baby_id', babySel.value);
 
       const lang = localStorage.getItem('lang') || 'en';
+      const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+      const headers = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
       const res = await fetch(`${BACKEND_URL}/predict?lang=${encodeURIComponent(lang)}`, {
         method: 'POST',
-        body: fd
+        body: fd,
+        headers
       });
 
       if (!res.ok) {
@@ -509,6 +549,17 @@
           record_id: data.record_id || null
         }));
       } catch(e) { console.warn('Failed to cache prediction', e); }
+
+      // Show saved-to-history status if backend returned a record id
+      try {
+        const saveStatus = document.getElementById('saveStatus');
+        if (data.record_id) {
+          const babyName = (document.getElementById('babySelect')?.selectedOptions[0]?.text) || '';
+          saveStatus.textContent = (babyName ? `Saved to ${babyName}` : 'Saved to baby history') + ` — Record ID: ${data.record_id}`;
+        } else {
+          saveStatus.textContent = '';
+        }
+      } catch(e){console.warn('Failed updating saveStatus', e)}
 
       // Removed auto re-assert timeout per user request.
 

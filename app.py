@@ -95,6 +95,7 @@ def create_app():
         ("consultation_routes", "consult_bp"),
         ("history_routes", "history_bp"),
         ("chat_routes", "chat_bp"),
+        ("doctor_routes", "doctor_bp"),
     ]
 
     for file, bp in blueprints:
