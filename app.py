@@ -89,13 +89,10 @@ def create_app():
 
     blueprints = [
         ("auth_routes", "auth_bp"),
-        ("baby_routes", "baby_bp"),
         ("predict_routes", "predict_bp"),
+        # scans API provides listing/creation of saved scans used by dashboard
+        ("scans_routes", "scans_bp"),
         ("parent_routes", "parent_bp"),
-        ("consultation_routes", "consult_bp"),
-        ("history_routes", "history_bp"),
-        ("chat_routes", "chat_bp"),
-        ("doctor_routes", "doctor_bp"),
     ]
 
     for file, bp in blueprints:

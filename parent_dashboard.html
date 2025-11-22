@@ -72,6 +72,10 @@
     /* Chat floating button */
     .chat-fab{ position:fixed; right:18px; bottom:18px; width:56px; height:56px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 20px rgba(17,102,238,0.18); cursor:pointer; z-index:200; }
     .chat-fab[hidden]{ display:none; }
+
+    /* small thumb */
+    .scan-thumb{ width:64px; height:48px; object-fit:cover; border-radius:8px; }
+    .filter-select{ width:100%; padding:8px; border-radius:8px; border:1px solid #e6e9ef; margin-bottom:8px; }
   </style>
 </head>
 <body>
@@ -137,12 +141,12 @@
         <div style="margin-top:14px">
           <div class="card row" style="align-items:flex-start; padding:12px;">
             <div style="flex:1;">
-              <h3 data-en="Your Babies" data-kn="ನಿಮ್ಮ ಶಿಶುಗಳು">Your Babies</h3>
+              <h3 data-en="Scans" data-kn="ಸ್ಕ್ಯಾನ್ಸ್">Scans</h3>
               <div id="babyList" class="baby-list"></div>
             </div>
 
             <div style="width:360px;">
-              <h3 data-en="Selected Baby History" data-kn="ಆಯ್ದ ಶಿಶುವಿನ ಇತಿಹಾಸ">Selected Baby History</h3>
+              <h3 data-en="Selected Scan Details" data-kn="ಆಯ್ದ ಸ್ಕ್ಯಾನ್ ವಿವರಗಳು">Selected Scan Details</h3>
               <div id="selectedBabyCard" style="margin-top:8px"></div>
             </div>
           </div>
@@ -238,7 +242,6 @@ if (!token) {
   window.location.href = "login.html";
 }
 if (role !== "parent") {
-  // if doctor tries to open this page redirect
   window.location.href = "doctor_dashboard.html";
 }
 
@@ -257,7 +260,6 @@ function setLanguage(lang) {
   document.querySelectorAll("[data-en-placeholder]").forEach(el => {
     el.placeholder = el.getAttribute(`data-${lang}-placeholder`);
   });
-  // update welcome text
   document.getElementById("welcomeText").textContent = lang === "en" ? `Welcome, ${fullName}` : `ಸ್ವಾಗತ, ${fullName}`;
 }
 document.getElementById("languageSwitcher").addEventListener("change", e => setLanguage(e.target.value));
@@ -278,15 +280,10 @@ function showSection(section) {
   const navId = section === "history" ? "nav_history" : section === "doctors" ? "nav_doctors" : section === "profile" ? "nav_profile" : "nav_status";
   const navEl = document.getElementById(navId);
   if (navEl) navEl.classList.add("active");
-  // load hooks
   if (section === 'history') loadBabies();
   if (section === 'profile') loadParentProfile();
 }
-
-/* OPEN DASHBOARD (keeps compatibility) */
 function openDashboard() { showSection('history'); }
-
-/* LOGOUT */
 function logout() {
   localStorage.removeItem("token");
   localStorage.removeItem("role");
@@ -294,10 +291,7 @@ function logout() {
   localStorage.removeItem("full_name");
   window.location.href = "login.html";
 }
-
-/* Chat control (visible only when allowed) */
 function openChat() {
-  // This should navigate to your chat UI; placeholder:
   window.location.href = `chat.html?user_id=${userId}`;
 }
 
@@ -308,15 +302,38 @@ function openChat() {
 /* Helper: fetch JSON with auth */
 async function apiFetch(url, options = {}) {
   options.headers = options.headers || {};
-  options.headers["Authorization"] = `Bearer ${token}`;
+  // attach auth header when token available
+  if (token) options.headers["Authorization"] = `Bearer ${token}`;
   try {
     const res = await fetch(url, options);
-    if (!res.ok) {
-      // try to read json error
-      const txt = await res.text();
-      try { const j = JSON.parse(txt); throw new Error(j.message || txt); } catch { throw new Error(txt); }
+    // always read as text first so we can handle HTML error pages (e.g. login.html)
+    const bodyText = await res.text();
+    // try parse JSON, otherwise keep raw text
+    let data;
+    try {
+      data = bodyText ? JSON.parse(bodyText) : null;
+    } catch (e) {
+      data = null;
     }
-    return await res.json();
+
+    // handle non-OK responses specially
+    if (!res.ok) {
+      // common case: expired / invalid token
+      if (res.status === 401) {
+        try { localStorage.removeItem('token'); localStorage.removeItem('access_token'); } catch(e){}
+        // show friendly message and force login
+        alert('Session expired or unauthorized. Please log in again.');
+        window.location.href = 'login.html';
+        throw new Error(bodyText || JSON.stringify({ status: res.status, statusText: res.statusText }));
+      }
+
+      // other errors: throw parsed JSON if available, otherwise raw text
+      if (data) throw new Error(JSON.stringify(data));
+      throw new Error(bodyText || res.statusText || `HTTP ${res.status}`);
+    }
+
+    // success: return parsed JSON when available, otherwise return raw text
+    return data !== null ? data : bodyText;
   } catch (err) {
     console.error("API error", err);
     throw err;
@@ -325,11 +342,13 @@ async function apiFetch(url, options = {}) {
 
 /* Load babies and populate lists (called at startup) */
 let babies = [];
+let scans = [];
 let selectedBabyId = null;
+
 async function loadBabies() {
   try {
     const data = await apiFetch(`${BACKEND}/api/babies/${userId}`);
-    babies = Array.isArray(data) ? data : [];
+    babies = Array.isArray(data) ? data : (data.babies || []);
     renderBabyList();
     if (babies.length) {
       selectedBabyId = babies[0].id;
@@ -338,78 +357,95 @@ async function loadBabies() {
       selectedBabyId = null;
       renderSelectedBaby(null);
     }
+    // update filter if scans already loaded
+    populateBabyFilter();
   } catch (e) {
     console.error(e);
     document.getElementById("babyList").innerHTML = `<div class="muted">${currentLang === 'en' ? 'Failed to load babies' : 'ಶಿಶುಗಳನ್ನು ಲೋಡ್ ಮಾಡಲು ವಿಫಲವಾಗಿದೆ'}</div>`;
   }
 }
 
-/* Render baby list */
+/* Render baby list area — now shows scan filter + scans */
 function renderBabyList() {
   const list = document.getElementById("babyList");
   list.innerHTML = "";
-  if (!babies.length) {
-    list.innerHTML = `<div class="muted">${currentLang === 'en' ? 'No babies added yet. Use Add Baby from profile.' : 'ಇನ್ನೂ ಯಾವುದೇ ಶಿಶು ಸೇರಿಸಲಿಲ್ಲ. ಪ್ರೊಫೈಲಿನಿಂದ ಶಿಶುವನ್ನು ಸೇರಿಸಿ.'}</div>`;
+  if (!scans.length) {
+    const msg = document.createElement('div');
+    msg.className = 'muted';
+    msg.textContent = currentLang === 'en' ? 'No scans available yet. Upload an image on Upload page.' : 'ಇನ್ನೂ ಯಾವುದೇ ಸ್ಕ್ಯಾನ್ಸ್ ಲಭ್ಯವಿಲ್ಲ. ಅಪ್‌ಲೋಡ್ ಪುಟದಲ್ಲಿ ಚಿತ್ರವನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ.';
+    list.appendChild(msg);
     return;
   }
-  babies.forEach(b => {
-    const div = document.createElement("div");
-    div.className = "baby-row";
-    div.innerHTML = `
-      <div>
-        <strong>${escapeHtml(b.name)}</strong>
-        <div class="meta">${escapeHtml(b.date_of_birth || '')}</div>
+
+  // If scans exist render them
+  renderScanList();
+}
+
+/* ----------------------------
+   Scans loader & renderer
+   ---------------------------- */
+async function loadScans() {
+  try {
+    const data = await apiFetch(`${BACKEND}/api/scans?parent_id=${userId}`);
+    // Expecting array or { scans: [...] }
+    scans = Array.isArray(data) ? data : (data.scans || []);
+    renderScanList();
+    populateBabyFilter();
+  } catch (e) {
+    console.error('Failed to load scans', e);
+    scans = [];
+    renderScanList();
+  }
+}
+
+function populateBabyFilter(){
+  // No-op: we no longer use a baby filter. Scans are shown for the logged-in account.
+  return;
+}
+
+function renderScanList(){
+  const container = document.getElementById("babyList");
+  if(!container) return;
+
+  // no filter: always show all scans for this account
+  const filtered = scans.slice();
+  container.innerHTML = '';
+
+  if (!filtered.length) {
+    const msg = document.createElement('div');
+    msg.className = 'muted';
+    msg.textContent = currentLang==='en' ? 'No scans found for selected baby.' : 'ಆಯ್ದ ಶಿಶುಗೆ ಯಾವುದೇ ಸ್ಕ್ಯಾನ್ಸ್ ಇಲ್ಲ.';
+    container.appendChild(msg);
+    return;
+  }
+
+  const wrap = document.createElement('div');
+  wrap.style.display = 'flex';
+  wrap.style.flexDirection = 'column';
+  wrap.style.gap = '8px';
+
+  filtered.forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'baby-row';
+    row.style.justifyContent = 'space-between';
+    row.innerHTML = `
+      <div style="display:flex;gap:12px;align-items:center;flex:1">
+        <div>
+          ${s.image_url ? `<img src="${escapeHtml(s.image_url)}" class="scan-thumb" />` : `<div style="width:64px;height:48px;border-radius:8px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:#334155">IMG</div>`}
+        </div>
+        <div style="flex:1">
+          <div style="font-weight:700">Scan #${escapeHtml(String(s.id || s.scan_id || ''))} — ${escapeHtml(s.rash_type || s.label || '')}</div>
+          <div class="meta">${escapeHtml(s.created_at || s.created || '')} • ${escapeHtml(String(Number(s.confidence || 0)))}%</div>
+        </div>
       </div>
-      <div style="display:flex;gap:8px; align-items:center;">
-        <button class="btn ghost" onclick="selectBaby(${b.id})" data-en="View" data-kn="ವೀಕ್ಷಣೆಗೆ">${currentLang==='en'?'View':'ವೀಕ್ಷಣೆಗೆ'}</button>
-        <button class="btn" onclick="openBabyHistory(${b.id})" data-en="History" data-kn="ಇತಿಹಾಸ">${currentLang==='en'?'History':'ಇತಿಹಾಸ'}</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn ghost" onclick="selectScan(${s.id || s.scan_id})">${currentLang==='en'?'View':'ವೀಕ್ಷಣೆಗೆ'}</button>
       </div>
     `;
-    list.appendChild(div);
+    wrap.appendChild(row);
   });
-}
 
-/* select baby to show details */
-function selectBaby(id) {
-  selectedBabyId = id;
-  renderSelectedBaby(id);
-}
-
-/* render selected baby history and scans */
-async function renderSelectedBaby(id) {
-  const area = document.getElementById("selectedBabyCard");
-  if (!id) {
-    area.innerHTML = `<div class="muted">${currentLang === 'en' ? 'No baby selected.' : 'ಯಾವುದೇ ಶಿಶು ಆಯ್ದಿಲ್ಲ.'}</div>`;
-    return;
-  }
-  try {
-    const data = await apiFetch(`${BACKEND}/api/babies/${userId}/${id}/history`); // expects { baby: {...}, scans: [...] }
-    let html = `<div style="display:flex;flex-direction:column;gap:8px;">`;
-    html += `<div style="padding:12px;border-radius:10px;background:#fbfdff;border:1px solid #eef3ff"><strong>${escapeHtml(data.baby?.name || 'Baby')}</strong><div class="muted">${escapeHtml(data.baby?.date_of_birth || '')}</div></div>`;
-    if (!data.scans || !data.scans.length) {
-      html += `<div class="muted" style="padding:12px;border-radius:10px;margin-top:8px">${currentLang==='en'?'No scans found':'ಯಾವುದೇ ಸ್ಕ್ಯಾನ್ಸ್ ಕಂಡುಬಂದಿಲ್ಲ'}</div>`;
-    } else {
-      html += `<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">`;
-      data.scans.forEach(s => {
-        html += `
-          <div class="baby-row">
-            <div>
-              <strong>${escapeHtml(s.rash_type || '')}</strong>
-              <div class="meta">${escapeHtml(s.created_at || '')} • ${escapeHtml(String(s.confidence || ''))}%</div>
-            </div>
-            <div>
-              <button class="btn ghost" onclick="viewScan(${s.id})">${currentLang==='en'?'View':'ವೀಕ್ಷಣೆಗೆ'}</button>
-            </div>
-          </div>`;
-      });
-      html += `</div>`;
-    }
-    html += `</div>`;
-    area.innerHTML = html;
-  } catch (e) {
-    console.error(e);
-    area.innerHTML = `<div class="muted">${currentLang === 'en' ? 'Failed to load baby history' : 'ಶಿಶು ಇತಿಹಾಸ ಲೋಡ್ ಮಾಡಲು ವಿಫಲವಾಗಿದೆ'}</div>`;
-  }
+  container.appendChild(wrap);
 }
 
 /* view single scan (open new page or modal) */
@@ -417,11 +453,85 @@ function viewScan(scanId) {
   window.location.href = `scan_view.html?scan_id=${scanId}`;
 }
 
-/* manual open baby history */
-function openBabyHistory(babyId) {
-  selectedBabyId = babyId;
-  renderSelectedBaby(babyId);
-  showSection('history');
+/* select baby to show details (kept for compatibility) */
+function selectBaby(id) {
+  selectedBabyId = id;
+  renderSelectedBaby(id);
+}
+
+/* select a scan to show its details in the right panel */
+function selectScan(scanId) {
+  // renderSelectedBaby will try scan endpoint first
+  renderSelectedBaby(scanId);
+}
+
+/* render selected scan (or fallback to baby history if id refers to a baby) */
+async function renderSelectedBaby(id) {
+  const area = document.getElementById("selectedBabyCard");
+  if (!id) {
+    area.innerHTML = `<div class="muted">${currentLang === 'en' ? 'No item selected.' : 'ಯಾವುದೇ ಐಟಂ ಆಯ್ದಿಲ್ಲ.'}</div>`;
+    return;
+  }
+  try {
+    // Try loading a single scan first
+    const scan = await apiFetch(`${BACKEND}/api/scans/${id}`);
+    // expected fields: id, image_url, rash_type, confidence, care_tips, prevention_tips, created_at
+    let html = `<div style="display:flex;flex-direction:column;gap:8px;">`;
+    html += `<div style="padding:12px;border-radius:10px;background:#fbfdff;border:1px solid #eef3ff;display:flex;gap:12px;align-items:center">`;
+    if (scan.image_url) html += `<img src="${escapeHtml(scan.image_url)}" style="width:120px;height:90px;object-fit:cover;border-radius:8px" />`;
+    html += `<div style="flex:1"><strong>Scan #${escapeHtml(String(scan.id || scan.scan_id || ''))}</strong><div class="muted">${escapeHtml(scan.created_at || scan.created || '')}</div></div>`;
+    html += `</div>`;
+
+    html += `<div style="padding:12px;border-radius:8px;border:1px solid #eef3ff;background:#fff;margin-top:8px">`;
+    html += `<div style="font-weight:700">${escapeHtml(scan.rash_type || scan.label || '')} <span class="muted">• ${escapeHtml(String(Number(scan.confidence || 0)))}%</span></div>`;
+    if (scan.care_tips && Array.isArray(scan.care_tips) && scan.care_tips.length) {
+      html += `<div style="margin-top:8px"><strong>${currentLang==='en'?'Care Tips':'ಪೋಷಣೆ ಸಲಹೆಗಳು'}</strong><ul>`;
+      scan.care_tips.forEach(t => { html += `<li>${escapeHtml(t)}</li>`; });
+      html += `</ul></div>`;
+    }
+    if (scan.prevention_tips && Array.isArray(scan.prevention_tips) && scan.prevention_tips.length) {
+      html += `<div style="margin-top:8px"><strong>${currentLang==='en'?'Prevention':'ತಡೆಗಟ್ಟುವಿಕೆ'}</strong><ul>`;
+      scan.prevention_tips.forEach(t => { html += `<li>${escapeHtml(t)}</li>`; });
+      html += `</ul></div>`;
+    }
+    html += `<div style="margin-top:8px;display:flex;gap:8px"><button class="btn" onclick="viewScan(${scan.id || scan.scan_id})">${currentLang==='en'?'Open Full View':'ಪೂರ್ಣ ವೀಕ್ಷಣೆ'}</button></div>`;
+    html += `</div>`;
+
+    html += `</div>`;
+    area.innerHTML = html;
+    return;
+  } catch (e) {
+    // If scan endpoint failed, try baby history (backwards compatibility)
+    try {
+      const data = await apiFetch(`${BACKEND}/api/babies/${userId}/${id}/history`); // expects { baby: {...}, scans: [...] }
+      let html = `<div style="display:flex;flex-direction:column;gap:8px;">`;
+      html += `<div style="padding:12px;border-radius:10px;background:#fbfdff;border:1px solid #eef3ff"><strong>${escapeHtml(data.baby?.name || 'Baby')}</strong><div class="muted">${escapeHtml(data.baby?.date_of_birth || '')}</div></div>`;
+      if (!data.scans || !data.scans.length) {
+        html += `<div class="muted" style="padding:12px;border-radius:10px;margin-top:8px">${currentLang==='en'?'No scans found':'ಯಾವುದೇ ಸ್ಕ್ಯಾನ್ಸ್ ಕಂಡುಬಂದಿಲ್ಲ'}</div>`;
+      } else {
+        html += `<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">`;
+        data.scans.forEach(s => {
+          html += `
+            <div class="baby-row">
+              <div>
+                <strong>${escapeHtml(s.rash_type || '')}</strong>
+                <div class="meta">${escapeHtml(s.created_at || '')} • ${escapeHtml(String(s.confidence || ''))}%</div>
+              </div>
+              <div>
+                <button class="btn ghost" onclick="viewScan(${s.id})">${currentLang==='en'?'View':'ವೀಕ್ಷಣೆಗೆ'}</button>
+              </div>
+            </div>`;
+        });
+        html += `</div>`;
+      }
+      html += `</div>`;
+      area.innerHTML = html;
+      return;
+    } catch (err) {
+      console.error(err);
+      area.innerHTML = `<div class="muted">${currentLang === 'en' ? 'Failed to load details' : 'ವಿವರಗಳನ್ನು ಲೋಡ್ ಮಾಡಲು ವಿಫಲವಾಗಿದೆ'}</div>`;
+    }
+  }
 }
 
 /* ----------------------------
@@ -506,11 +616,9 @@ async function loadParentProfile(){
   area.innerHTML = `<div class="muted">${currentLang==='en'?'Loading profile...':'ಪ್ರೊಫೈಲ್ ಅನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...'}</div>`;
   try{
     const profile = await apiFetch(`${BACKEND}/api/parent/profile`);
-    // Some backends may return user object or profile
     const p = profile && profile.user ? profile.user : profile || {};
     const nameVal = escapeHtml(p.full_name || p.first_name || '');
     const phoneVal = escapeHtml(p.phone || '');
-    // If profile is empty, show empty form so parent can enter details
     area.innerHTML = `
       <div style="display:flex;flex-direction:column;gap:8px">
         <label data-en="Full name" data-kn="ಪೂರ್ಣ ಹೆಸರು">${currentLang==='en'?'Full name':'ಪೂರ್ಣ ಹೆಸರು'}</label>
@@ -524,11 +632,9 @@ async function loadParentProfile(){
         <div id="parentProfileMsg" class="muted"></div>
       </div>
     `;
-    // load children regardless (may be empty)
     loadChildren();
   } catch(e){
     console.warn('parent profile not found or failed to fetch, showing empty form', e);
-    // show empty form to allow first-time save
     area.innerHTML = `
       <div style="display:flex;flex-direction:column;gap:8px">
         <div class="muted">${currentLang==='en'?'No profile found. Please enter your details and Save.':'ಪ್ರೊಫೈಲ್ ಕಂಡುಬರಲಿಲ್ಲ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ವಿವರಗಳನ್ನು ನಮೂದಿಸಿ ಮತ್ತು ಉಳಿಸಿ.'}</div>
@@ -556,8 +662,14 @@ async function saveParentProfile(){
   try{
     const res = await apiFetch(`${BACKEND}/api/parent/profile`, { method: 'PUT', body: JSON.stringify(payload), headers: { 'Content-Type': 'application/json' } });
     msgEl.textContent = res.message || (currentLang==='en'?'Saved':'ಉಳಿಸಲಾಗಿದೆ');
-    // update UI name
-    document.getElementById('userName').textContent = payload.full_name || document.getElementById('userName').textContent;
+    // update local display and persist full name to localStorage so reload keeps it
+    const newName = payload.full_name || (res.user && res.user.full_name) || null;
+    if (newName) {
+      try { localStorage.setItem('full_name', newName); } catch(e){}
+      document.getElementById('userName').textContent = newName;
+    }
+    // refresh profile from server to ensure UI reflects persisted state
+    try { await loadParentProfile(); } catch(e) { /* ignore refresh errors */ }
   } catch(e){
     console.error(e);
     msgEl.textContent = currentLang==='en'? 'Save failed' : 'ಉಳಿಸಲು ವಿಫಲವಾಗಿದೆ';
@@ -600,9 +712,9 @@ async function addChild(){
     const payload = { parent_id: userId, name, date_of_birth: dob };
     const res = await apiFetch(`${BACKEND}/api/babies`, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'application/json' } });
     msgEl.textContent = res.message || (currentLang==='en'?'Child added':'ಮಗು ಸೇರಿಸಲಾಗಿದೆ');
-    // refresh list
     await loadChildren();
     await loadBabies();
+    await loadScans();
   } catch(e){
     console.error(e);
     msgEl.textContent = currentLang==='en' ? 'Add failed' : 'ಸೇರಿಸಲು ವಿಫಲವಾಗಿದೆ';
@@ -635,7 +747,6 @@ function openBookingForm(doctorId) {
     </div>
   `;
 
-  // populate baby select
   const sel = document.getElementById("bookBabySelect");
   sel.innerHTML = '';
   babies.forEach(b => {
@@ -688,23 +799,18 @@ const consultList = document.getElementById("consultList");
 
 consultRefreshBtn?.addEventListener("click", () => loadConsultStatus());
 consultCreateBtn?.addEventListener("click", () => {
-  // open doctor list section so parent can book
   showSection('doctors');
 });
 
-/* call this to load & render consultations for the logged-in parent */
 async function loadConsultStatus() {
-  // UI reset
   consultSpinner.style.display = "";
   consultEmpty.style.display = "none";
   consultList.style.display = "none";
   consultList.innerHTML = "";
 
   try {
-    // GET consultations for parent. Backend should return an array.
     const res = await apiFetch(`${BACKEND}/api/consultations/status/${userId}`);
     const items = Array.isArray(res) ? res : (res.consultations || res.items || []);
-
     consultSpinner.style.display = "none";
 
     if (!items || items.length === 0) {
@@ -716,14 +822,12 @@ async function loadConsultStatus() {
     consultEmpty.style.display = "none";
     consultList.style.display = "";
 
-    // render each consultation card
     items.forEach(item => {
       const card = document.createElement("div");
       card.className = "baby-row";
       card.style.justifyContent = "space-between";
       card.style.alignItems = "center";
 
-      // left html
       const leftHtml = `
         <div style="display:flex;flex-direction:column;gap:6px;">
           <div style="font-weight:700">${escapeHtml(item.doctor_name || item.doctor || (currentLang==='en'?'Doctor':'ವೈದ್ಯ'))} • ${escapeHtml(item.baby_name || '')}</div>
@@ -731,34 +835,29 @@ async function loadConsultStatus() {
         </div>
       `;
 
-      // right box
       const rightDiv = document.createElement("div");
       rightDiv.style.display = "flex";
       rightDiv.style.flexDirection = "column";
       rightDiv.style.gap = "8px";
       rightDiv.style.alignItems = "flex-end";
 
-      // status pill
       const pill = document.createElement("span");
       const statusKey = (item.status || 'pending');
       pill.className = `status-pill ${statusKey}`;
       pill.textContent = translateStatus(statusKey);
       rightDiv.appendChild(pill);
 
-      // actions row
       const actions = document.createElement("div");
       actions.style.display = "flex";
       actions.style.gap = "8px";
       actions.style.marginTop = "6px";
 
-      // View Details
       const viewBtn = document.createElement("button");
       viewBtn.className = "btn ghost";
       viewBtn.textContent = currentLang === "en" ? "View Details" : "ವಿವರಗಳನ್ನು ನೋಡಿ";
       viewBtn.onclick = () => window.location.href = `consult_view.html?consult_id=${item.id || item.consultation_id}`;
       actions.appendChild(viewBtn);
 
-      // Chat if accepted
       if (statusKey === "accepted") {
         const chatBtn = document.createElement("button");
         chatBtn.className = "btn";
@@ -769,7 +868,6 @@ async function loadConsultStatus() {
         actions.appendChild(chatBtn);
       }
 
-      // Cancel if pending
       if (statusKey === "pending") {
         const cancelBtn = document.createElement("button");
         cancelBtn.className = "btn ghost";
@@ -779,10 +877,8 @@ async function loadConsultStatus() {
       }
 
       rightDiv.appendChild(actions);
-
       card.innerHTML = leftHtml;
       card.appendChild(rightDiv);
-
       consultList.appendChild(card);
     });
 
@@ -794,7 +890,6 @@ async function loadConsultStatus() {
   }
 }
 
-/* Cancel consultation (pending) */
 async function cancelConsult(consultId) {
   if (!confirm(currentLang==='en' ? 'Cancel this consultation?' : 'ಈ ಸಲಹೆಯನ್ನು ರದ್ದುಮಾಡೋಣವೇ?')) return;
   try {
@@ -817,13 +912,7 @@ function translateStatus(status) {
     if (status === 'scheduled') return 'ನಿಗದಿಪಡಿಸಲಾಗಿದೆ';
     return status;
   }
-  // default english, capitalize first letter
   return status.charAt(0).toUpperCase() + status.slice(1);
-}
-
-/* When accepted -> open chat */
-function openChatForConsult(consultId, doctorId) {
-  window.location.href = `chat.html?consult_id=${consultId}&doctor_id=${doctorId}`;
 }
 
 /* =============================
@@ -834,13 +923,14 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+/* Startup: load babies, doctors, consults and scans */
 async function startup() {
-  showSection('history'); // open baby history by default (Option B)
+  showSection('history'); // open baby history by default
   await loadBabies();
   await loadDoctors();
   await loadConsultStatus();
+  await loadScans();
 
-  // show/hide chat fab based on any accepted consults
   const anyAccepted = (() => {
     try {
       const list = consultList.querySelectorAll('.baby-row');

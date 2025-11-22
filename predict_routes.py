@@ -84,38 +84,7 @@ def predict():
     except Exception:
         logger.warning("Care tips lookup failed", exc_info=True)
 
-    # Save file to uploads folder
-    fname = secure_filename(file.filename or "upload.jpg")
-    stem, ext = os.path.splitext(fname)
-    ts = datetime.utcnow().strftime("%Y%m%d%H%M%S")
-    final_name = f"{stem}_{ts}{ext or '.jpg'}"
-    save_path = os.path.join(current_app.uploads_path, final_name)
-    try:
-        file.stream.seek(0)
-        with open(save_path, "wb") as fh:
-            fh.write(file.read())
-    except Exception:
-        logger.exception("Failed saving file")
-
-    record_id = None
-    user_id = get_jwt_identity()
-    if baby_id is not None:
-        try:
-            rec = SkinRecord(
-                baby_id=baby_id,
-                created_by_id=user_id,
-                predicted_rash_type=label,
-                confidence_score=confidence_pct,
-                image_path=final_name
-            )
-            db.session.add(rec)
-            db.session.commit()
-            record_id = rec.id
-        except Exception:
-            logger.exception("DB save failed; continuing without record")
-
-    image_url = url_for("file", filename=final_name, _external=False)
-    logger.info("PREDICTION label=%s confidence=%.2f%% baby_id=%s record_id=%s", label, confidence_pct, baby_id, record_id)
+    logger.info("PREDICTION label=%s confidence=%.2f%% baby_id=%s", label, confidence_pct, baby_id)
 
     return jsonify({
         "rash_type": label,
@@ -123,7 +92,5 @@ def predict():
         "care_tips": care_tips,
         "prevention_tips": prevention,
         "consult_doctor_if": doctor_if,
-        "record_id": record_id,
-        "image_url": image_url,
         "probs": result.get("probs", {})
     }), 200

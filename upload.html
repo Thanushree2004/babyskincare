@@ -1,673 +1,335 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Upload - Smart Baby Skin Scanner</title>
-  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/4762/4762967.png" type="image/png">
-
   <style>
-    body {
-      background-color: #eaf7ff;
-      font-family: Arial, sans-serif;
-      margin: 0;
-      text-align: center;
-    }
-
-    /* FIXED NAVBAR (NO HAMBURGER) */
-    nav {
-      background-color: #4CAF50;
-      padding: 12px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      white-space: nowrap;
-    }
-
-    .logo {
-      color: white;
-      font-size: 24px;
-      font-weight: bold;
-    }
-
-    .nav-links {
-      list-style: none;
-      display: flex;
-      gap: 25px;
-      margin: 0;
-      padding: 0;
-    }
-
-    .nav-links li {
-      display: inline-block;
-    }
-
-    .nav-links li a {
-      color: white;
-      text-decoration: none;
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    .nav-links li a:hover {
-      text-decoration: underline;
-    }
-
-    .logout-btn {
-      background: white;
-      color: #4CAF50;
-      font-weight: bold;
-      padding: 6px 14px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-    }
-
-    .logout-btn:hover {
-      background: #e8e8e8;
-    }
-
-    /* Language Selector */
-    #languageSwitcher {
-      margin-left: 15px;
-      padding: 5px;
-    }
-
-    /* MAIN CONTENT */
-    .container {
-      max-width: 1200px;
-      margin: 40px auto;
-      padding: 20px;
-      background-color: white;
-      border-radius: 15px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-
-    h1 {
-      color: #2c3e50;
-      margin-bottom: 20px;
-    }
-
-    .upload-section {
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      gap: 40px;
-      flex-wrap: nowrap;
-      margin-top: 10px;
-    }
-
-    .upload-box, .preview-box, .result-box {
-      flex: 0 0 340px;
-      background-color: #f9f9f9;
-      border-radius: 10px;
-      padding: 18px 18px 26px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.12);
-      margin: 10px 0;
-      min-width: 300px;
-      position: relative;
-    }
-
-    @media (max-width: 1150px) {
-      .upload-section { flex-wrap: wrap; }
-      .upload-box, .preview-box, .result-box { flex: 1 1 320px; }
-    }
-
-    .result-box.persist-visible { display: block !important; }
-
-    /* Rash type tab styling */
-    .rash-display { margin: 10px 0 18px; }
-    .rash-tab {
-      display: inline-block;
-      padding: 10px 18px;
-      border-radius: 22px;
-      font-size: 18px;
-      font-weight: 600;
-      letter-spacing: .5px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-      border: 1px solid rgba(0,0,0,0.06);
-    }
-    .rash-confidence { margin-top: 8px; font-size: 15px; font-weight: 600; color:#2c3e50; }
-
-    /* Soft tone palettes */
-    .rash-healthy { background:#e7f9ed; color:#1b5e20; }
-    .rash-mild { background:#e6f3ff; color:#0d47a1; }
-    .rash-fungal { background:#f5e9ff; color:#4a148c; }
-    .rash-infection { background:#fdeaea; color:#b71c1c; }
-    .rash-other { background:#f2f2f2; color:#37474f; }
-
-    .upload-box button {
-      margin-top: 10px;
-      padding: 8px 15px;
-      font-size: 14px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    img {
-      max-width: 100%;
-      border-radius: 10px;
-      margin-top: 10px;
-    }
-
-    #consultDoctorBtn {
-      background: #ff9800;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      margin-top: 12px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 16px;
-    }
+    body{font-family:Arial,Helvetica,sans-serif;background:#eaf7ff;margin:0}
+    nav{background:#39a84b;color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between}
+    .nav-left{display:flex;gap:18px;align-items:center}
+    .logo{font-weight:700}
+    .nav-link{color:#fff;text-decoration:none;font-weight:600}
+    .controls{display:flex;gap:8px;align-items:center}
+    .btn{background:#2e8b3a;color:#fff;border:0;padding:8px 12px;border-radius:6px;cursor:pointer}
+    .btn.alt{background:#d32f2f}
+    .container{max-width:1100px;margin:36px auto;padding:28px;background:#fff;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.08)}
+    .row{display:flex;gap:30px;align-items:flex-start;justify-content:center;flex-wrap:wrap}
+    .card{background:#fbfbfb;border-radius:10px;padding:18px;width:340px;box-shadow:0 6px 18px rgba(0,0,0,0.06);min-height:140px}
+    h1{text-align:center;margin-top:0;color:#234}
+    #preview img{max-width:100%;border-radius:10px}
+    .rash-tab{display:inline-block;padding:10px 16px;border-radius:20px;font-weight:700}
+    .rash-healthy{background:#e7f9ed;color:#1b5e20}
+    .rash-mild{background:#e6f3ff;color:#0d47a1}
+    .rash-fungal{background:#f5e9ff;color:#4a148c}
+    .rash-infection{background:#fdeaea;color:#b71c1c}
+    .rash-other{background:#f2f2f2;color:#37474f}
+    ul{padding-left:18px}
+    .small{font-size:14px;color:#444}
+    .camera-modal{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center}
+    .camera-card{background:#fff;padding:14px;border-radius:8px;max-width:520px;width:94%}
+    @media (max-width:800px){.row{flex-direction:column;align-items:center}}
   </style>
 </head>
-
 <body>
+  <nav>
+    <div class="nav-left">
+      <div class="logo">👶 Baby Skin Care</div>
+      <a class="nav-link" href="home.html" data-en="Home" data-kn="ಮುಖಪುಟ">Home</a>
+      <a class="nav-link" href="upload.html" data-en="Upload" data-kn="ಅಪ್‌ಲೋಡ್">Upload</a>
+      <a class="nav-link" href="about.html" data-en="About" data-kn="ಬಗ್ಗೆ">About</a>
+      <a class="nav-link" href="contact_help.html" data-en="Contact & Help" data-kn="ಸಂಪರ್ಕ & ಸಹಾಯ">Contact & Help</a>
+      <a class="nav-link" href="#" onclick="openDashboard()" data-en="Dashboard →" data-kn="ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ →">Dashboard →</a>
+    </div>
+    <div class="controls">
+      <select id="lang" style="padding:6px;border-radius:6px">
+        <option value="en">English</option>
+        <option value="kn">ಕನ್ನಡ</option>
+      </select>
+      <button class="btn" id="logoutBtn">Logout</button>
+    </div>
+  </nav>
 
-<!-- FIXED NAVBAR -->
-<nav>
-  <div class="logo" data-en="👶 Baby Skin Care" data-kn="👶 ಬೇಬಿ ಸ್ಕಿನ್ ಕೇರ್">👶 Baby Skin Care</div>
+  <div class="container">
+    <h1 data-en="Smart Baby Rash Detector" data-kn="ಸ್ಮಾರ್ಟ್ ಬೇಬಿ ರಾಶಿ ಪತ್ತೆಗಾರ">Smart Baby Rash Detector</h1>
 
-  <ul class="nav-links">
-    <li><a href="home.html" data-en="Home" data-kn="ಮುಖಪುಟ">Home</a></li>
-    <li><a href="upload.html" data-en="Upload" data-kn="ಅಪ್‌ಲೋಡ್">Upload</a></li>
-    <li><a href="about.html" data-en="About" data-kn="ಬಗ್ಗೆ">About</a></li>
-    <li><a href="contact_help.html" data-en="Contact & Help" data-kn="ಸಂಪರ್ಕ & ಸಹಾಯ">Contact & Help</a></li>
-    <li><a href="#" onclick="openDashboard()" data-en="Dashboard →" data-kn="ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ →">Dashboard →</a></li>
-  </ul>
-
-  <button class="logout-btn" onclick="logout()" data-en="Logout" data-kn="ಲಾಗ್‌ಔಟ್">Logout</button>
-
-  <select id="languageSwitcher">
-    <option value="en">English</option>
-    <option value="kn">ಕನ್ನಡ</option>
-  </select>
-</nav>
-
-<!-- Page Content -->
-<div class="container">
-  <h1 data-en="Smart Baby Rash Detector" data-kn="ಸ್ಮಾರ್ಟ್ ಬೇಬಿ ರಾಶಿ ಪತ್ತೆಗಾರ">Smart Baby Rash Detector</h1>
-
-  <div class="upload-section">
-
-    <!-- Upload Box -->
-    <div class="upload-box">
-      <h2 data-en="Upload Image" data-kn="ಚಿತ್ರವನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ">Upload Image</h2>
-
-      <input type="file" accept="image/*" id="imageInput">
-
-      <div style="margin-top:10px; text-align:left">
-        <label for="babySelect" data-en="Save to Baby" data-kn="ಶಿಶುಕ್ಕೆ ಉಳಿಸಿ">Save to Baby (optional)</label>
-        <select id="babySelect" style="width:100%;padding:8px;border-radius:6px;margin-top:6px">
-          <option value="">-- Select baby (optional) --</option>
-        </select>
+    <div class="row">
+      <div class="card" style="text-align:center">
+        <h2 data-en="Upload Image" data-kn="ಚಿತ್ರವನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ">Upload Image</h2>
+        <input id="fileInput" type="file" accept="image/*"><br>
+        <div style="margin-top:12px">
+          <button id="cameraBtn" class="btn" data-en="Use Camera" data-kn="ಕ್ಯಾಮರಾ ಬಳಸಿ">Use Camera</button>
+          <button id="checkBtn" class="btn" data-en="Check Rash" data-kn="ರಾಶಿ ಪರಿಶೀಲನೆ">Check Rash</button>
+        </div>
+        <div style="margin-top:10px">
+          <button id="resetBtn" class="btn alt" data-en="Reset" data-kn="ಮರುಹೊಂದಿಸಿ">Reset</button>
+        </div>
       </div>
 
-      <div style="margin-top:10px;">
-        <button id="openCameraButton" data-en="Use Camera" data-kn="ಕ್ಯಾಮರಾ ಬಳಸಿ">Use Camera</button>
-        <button id="checkRashButton" data-en="Check Rash" data-kn="ರಾಶಿ ಪರಿಶೀಲನೆ">Check Rash</button>
+      <div class="card" id="preview" style="display:none">
+        <h2 data-en="Image Preview" data-kn="ಚಿತ್ರ ಮುನ್ನೋಟ">Image Preview</h2>
+        <img id="previewImg" src="">
       </div>
-      <div style="margin-top:8px;">
-        <button id="resetButton" data-en="Reset" data-kn="ಮರುಹೊಂದಿಸಿ" style="background:#d32f2f;">Reset</button>
+
+      <div class="card" id="result" style="display:none">
+        <h2 data-en="Prediction Result" data-kn="ಅಂದಾಜು ಫಲಿತಾಂಶ">Prediction Result</h2>
+        <div style="margin:12px 0">
+          <div id="rashTab" class="rash-tab rash-other">Rash: <span id="rashType">-</span></div>
+          <div class="small" style="margin-top:8px" id="confLine">Confidence: <strong id="confVal">-</strong></div>
+        </div>
+        <h3 data-en="Care Tips:" data-kn="ಪೋಷಣೆ ಸಲಹೆಗಳು:">Care Tips:</h3>
+        <ul id="careList"></ul>
+        <h3 data-en="Prevention:" data-kn="ತಡೆಗಟ್ಟುವಿಕೆ:">Prevention:</h3>
+        <ul id="prevList"></ul>
       </div>
     </div>
-
-    <!-- Preview -->
-    <div class="preview-box" id="previewBox" style="display:none;">
-      <h2 data-en="Image Preview" data-kn="ಚಿತ್ರ ಮುನ್ನೋಟ">Image Preview</h2>
-      <img id="previewImage" src="">
-    </div>
-
-    <!-- Result -->
-    <div class="result-box" id="resultBox" style="display:none;">
-      <h2 data-en="Prediction Result" data-kn="ಅಂದಾಜು ಫಲಿತಾಂಶ">Prediction Result</h2>
-
-      <div class="rash-display">
-        <div id="rashTab" class="rash-tab rash-other" data-en-prefix="Rash" data-kn-prefix="ರಾಶಿ">Rash: <span id="rashType">-</span></div>
-        <div class="rash-confidence" data-en-prefix="Confidence" data-kn-prefix="ಭರವಸೆ ಪ್ರಮಾಣ">Confidence: <span id="confidence">-</span></div>
-      </div>
-
-      <h3 data-en="Care Tips:" data-kn="ಪೋಷಣೆ ಸಲಹೆಗಳು:">Care Tips:</h3>
-      <ul id="careTipsList"></ul>
-      <h3 data-en="Prevention:" data-kn="ತಡೆಗಟ್ಟುವಿಕೆ:">Prevention:</h3>
-      <ul id="preventionList"></ul>
-      <h3 data-en="Consult Doctor If:" data-kn="ಈ ಸಂದರ್ಭಗಳಲ್ಲಿ ವೈದ್ಯರನ್ನು ಸಂಪರ್ಕಿಸಿ:">Consult Doctor If:</h3>
-      <ul id="doctorIfList"></ul>
-
-      <button id="consultDoctorBtn" style="display:none;" data-en="Consult a Doctor" data-kn="ವೈದ್ಯರನ್ನು ಸಂಪರ್ಕಿಸಿ">Consult a Doctor</button>
-      <div id="saveStatus" class="muted" style="margin-top:8px"></div>
-    </div>
-
   </div>
-</div>
 
-<!-- Camera Modal -->
-<div class="camera-modal" id="cameraModal" style="
-  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
-  display:none; align-items:center; justify-content:center;">
-  <div class="camera-card" style="background:white; padding:12px; border-radius:8px; width:90%; max-width:480px;">
-    <video id="cameraVideo" autoplay></video>
-    <div class="camera-controls" style="margin-top:10px;">
-      <button id="captureButton">Capture</button>
-      <button id="closeCameraButton">Close</button>
+  <div class="camera-modal" id="cameraModal">
+    <div class="camera-card">
+      <video id="video" autoplay playsinline style="width:100%;border-radius:6px;background:#000"></video>
+      <div style="margin-top:8px;text-align:right">
+        <button id="capture" class="btn">Capture</button>
+        <button id="closeCam" class="btn alt">Close</button>
+      </div>
+      <canvas id="canvas" style="display:none"></canvas>
     </div>
-    <canvas id="captureCanvas" style="display:none;"></canvas>
   </div>
-</div>
 
-<!-- SCRIPT -->
 <script>
-  const BACKEND_URL = "http://127.0.0.1:5000";
-
-  // baby select data (id -> name)
-  let uploadBabies = [];
-
-  async function loadBabiesForUpload(){
-    const sel = document.getElementById('babySelect');
-    sel.innerHTML = `<option value="">-- Select baby (optional) --</option>`;
-    const token = localStorage.getItem('access_token') || localStorage.getItem('token');
-    if (!token) return; // not logged in or guest
-    try {
-      // Note: include trailing slash to avoid Flask redirect (preflight failures)
-      const res = await fetch(`${BACKEND_URL}/api/babies/`, { headers: { 'Authorization': `Bearer ${token}` } });
-      if (!res.ok) return;
-      const data = await res.json();
-      uploadBabies = Array.isArray(data) ? data : [];
-      uploadBabies.forEach(b => {
-        const opt = document.createElement('option');
-        opt.value = b.id; opt.text = b.name || (`Baby ${b.id}`);
-        sel.appendChild(opt);
-      });
-    } catch (e) { console.warn('Failed to load babies for upload', e); }
-  }
-
-  /* Dashboard */
-  function openDashboard() {
-    const role = localStorage.getItem("role");
-    if (role === "parent") window.location.href = "parent_dashboard.html";
-    else if (role === "doctor") window.location.href = "doctor_dashboard.html";
-    else alert("Please login first!");
-  }
-
-  /* Logout */
-  function logout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    window.location.href = "login.html";
-  }
-
-  /* LANGUAGE SWITCHER */
-  const switcher = document.getElementById("languageSwitcher");
-  const savedLang = localStorage.getItem("lang") || "en";
-  switcher.value = savedLang;
-  switcher.addEventListener("change", () => {
-    localStorage.setItem("lang", switcher.value);
-    // Avoid full page reload so prediction result persists.
-  });
-
-  /* IMAGE PREVIEW */
-  const imageInput = document.getElementById("imageInput");
-  const previewBox = document.getElementById("previewBox");
-  const previewImage = document.getElementById("previewImage");
-
-  // CAMERA ELEMENTS & LOGIC
-  const openCameraButton = document.getElementById('openCameraButton');
+  const BACKEND = "http://127.0.0.1:5000";
+  const fileInput = document.getElementById('fileInput');
+  const preview = document.getElementById('preview');
+  const previewImg = document.getElementById('previewImg');
+  const result = document.getElementById('result');
+  const rashType = document.getElementById('rashType');
+  const confVal = document.getElementById('confVal');
+  const careList = document.getElementById('careList');
+  const prevList = document.getElementById('prevList');
+  const checkBtn = document.getElementById('checkBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const cameraBtn = document.getElementById('cameraBtn');
   const cameraModal = document.getElementById('cameraModal');
-  const cameraVideo = document.getElementById('cameraVideo');
-  const captureButton = document.getElementById('captureButton');
-  const closeCameraButton = document.getElementById('closeCameraButton');
-  const captureCanvas = document.getElementById('captureCanvas');
-  let cameraStream = null;
-  window.capturedImageBlob = null; // global fallback for prediction
+  const video = document.getElementById('video');
+  const captureBtn = document.getElementById('capture');
+  const closeCam = document.getElementById('closeCam');
+  const canvas = document.getElementById('canvas');
+  const langSelect = document.getElementById('lang');
+  const logoutBtn = document.getElementById('logoutBtn');
 
-  async function startCamera(){
-    try {
-      // Prefer rear camera on mobile if available
-      const constraints = { video: { facingMode: { ideal: 'environment' } }, audio: false };
-      cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
-      cameraVideo.srcObject = cameraStream;
-      cameraModal.style.display = 'flex';
-    } catch(err){
-      console.error('Camera access failed', err);
-      alert('Unable to access camera: ' + (err.message || err.name));
-    }
+  // simple nav
+  function openDashboard(){ const role=localStorage.getItem('role'); if(role==='doctor') location.href='doctor_dashboard.html'; else location.href='parent_dashboard.html'; }
+  logoutBtn.addEventListener('click', ()=>{ localStorage.removeItem('token'); localStorage.removeItem('role'); location.href='login.html'; });
+
+  // language apply for static labels
+  function applyLang(l){
+    document.querySelectorAll('[data-en]').forEach(el=>{
+      el.textContent = l==='kn' ? (el.getAttribute('data-kn')||el.getAttribute('data-en')) : el.getAttribute('data-en');
+    });
   }
+  langSelect.value = localStorage.getItem('lang') || 'en';
+  applyLang(langSelect.value);
+  langSelect.addEventListener('change', ()=>{ localStorage.setItem('lang', langSelect.value); applyLang(langSelect.value); });
 
-  function stopCamera(){
-    if (cameraStream){
-      cameraStream.getTracks().forEach(t => t.stop());
-      cameraStream = null;
-    }
-    cameraVideo.srcObject = null;
+  // preview helpers
+  function showPreview(src){
+    previewImg.src = src;
+    preview.style.display = 'block';
   }
+  function hidePreview(){ previewImg.src=''; preview.style.display='none'; }
 
-  openCameraButton.addEventListener('click', () => {
-    startCamera();
-  });
-
-  closeCameraButton.addEventListener('click', () => {
-    stopCamera();
-    cameraModal.style.display = 'none';
-  });
-
-  captureButton.addEventListener('click', () => {
-    if (!cameraStream){
-      alert('Camera not active');
-      return;
-    }
-    const videoTrack = cameraStream.getVideoTracks()[0];
-    const settings = videoTrack.getSettings();
-    const w = settings.width || cameraVideo.videoWidth || 640;
-    const h = settings.height || cameraVideo.videoHeight || 480;
-    captureCanvas.width = w;
-    captureCanvas.height = h;
-    const ctx = captureCanvas.getContext('2d');
-    ctx.drawImage(cameraVideo, 0, 0, w, h);
-    const dataUrl = captureCanvas.toDataURL('image/png');
-    previewImage.src = dataUrl;
-    previewBox.style.display = 'block';
-    try { localStorage.setItem('lastPreviewImage', dataUrl); } catch(e){ console.warn('Failed to store preview', e); }
-    // Convert to blob for prediction
-    fetch(dataUrl)
-      .then(r => r.blob())
-      .then(blob => { window.capturedImageBlob = blob; })
-      .catch(e => console.warn('Blob conversion failed', e));
-    // Close camera
-    stopCamera();
-    cameraModal.style.display = 'none';
-  });
-
-  imageInput.addEventListener("change", () => {
-    const file = imageInput.files[0];
-    if (!file) return;
-    // Use DataURL so preview can persist across refresh & prediction cycles
+  fileInput.addEventListener('change', ()=> {
+    const f = fileInput.files[0];
+    if (!f) return;
     const reader = new FileReader();
     reader.onload = e => {
-      const dataUrl = e.target.result;
-      previewImage.src = dataUrl;
-      previewBox.style.display = "block";
-      try { localStorage.setItem('lastPreviewImage', dataUrl); } catch(err) { console.warn('Cache preview failed', err); }
+      showPreview(e.target.result);
+      // new image selected -> clear any previous stored prediction
+      try { sessionStorage.removeItem('lastPrediction'); sessionStorage.removeItem('lastPreview'); } catch(e){}
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(f);
+    // clear any previous result
+    result.style.display='none';
   });
 
-  /* PREDICTION: send image to backend /predict */
-  const checkRashButton = document.getElementById('checkRashButton');
-  const resultBox = document.getElementById('resultBox');
-  const rashTypeEl = document.getElementById('rashType');
-  const rashTabEl = document.getElementById('rashTab');
-  const confidenceEl = document.getElementById('confidence');
-  const careTipsList = document.getElementById('careTipsList');
-  const preventionList = document.getElementById('preventionList');
-  const doctorIfList = document.getElementById('doctorIfList');
-  const consultDoctorBtn = document.getElementById('consultDoctorBtn');
-  const resetButton = document.getElementById('resetButton');
-
-  function resetAll(){
-    // Clear local storage caches
-    try { localStorage.removeItem('lastPreviewImage'); } catch(e){}
-    try { localStorage.removeItem('lastPrediction'); } catch(e){}
-    // Clear captured blob
-    window.capturedImageBlob = null;
-    // Reset file input
-    imageInput.value = '';
-    // Hide preview
-    previewImage.src = '';
-    previewBox.style.display = 'none';
-    // Clear tips lists
-    careTipsList.innerHTML = '';
-    preventionList.innerHTML = '';
-    doctorIfList.innerHTML = '';
-    consultDoctorBtn.style.display = 'none';
-    // Reset rash & confidence
-    rashTypeEl.textContent = '-';
-    confidenceEl.textContent = '-';
-    styleRashTab('-');
-    // Hide result box
-    resultBox.style.display = 'none';
-    resultBox.classList.remove('persist-visible');
-  }
-  resetButton.addEventListener('click', resetAll);
-
-  // Rehydrate previous prediction (if any) so it stays visible after incidental reloads
-  try {
-    // Restore preview image if cached
-    const cachedImg = localStorage.getItem('lastPreviewImage');
-    if (cachedImg) {
-      previewImage.src = cachedImg;
-      previewBox.style.display = 'block';
-    }
-    const cached = localStorage.getItem('lastPrediction');
-    if (cached) {
-      const data = JSON.parse(cached);
-      if (data && data.rash_type) {
-        rashTypeEl.textContent = data.rash_type;
-        styleRashTab(data.rash_type);
-        confidenceEl.textContent = data.confidence_display || '-';
-        careTipsList.innerHTML = '';
-        preventionList.innerHTML = '';
-        doctorIfList.innerHTML = '';
-        (data.care_tips || []).forEach(t => { const li = document.createElement('li'); li.textContent = t; careTipsList.appendChild(li); });
-        (data.prevention_tips || []).forEach(t => { const li = document.createElement('li'); li.textContent = t; preventionList.appendChild(li); });
-        (data.consult_doctor_if || []).forEach(t => { const li = document.createElement('li'); li.textContent = t; doctorIfList.appendChild(li); });
-        if ((data.care_tips || []).length === 0) { const li = document.createElement('li'); li.textContent = 'No care tips available'; careTipsList.appendChild(li); }
-        if ((data.prevention_tips || []).length === 0) { const li = document.createElement('li'); li.textContent = 'No prevention tips available'; preventionList.appendChild(li); }
-        if ((data.consult_doctor_if || []).length === 0) { const li = document.createElement('li'); li.textContent = 'No consultation guidance'; doctorIfList.appendChild(li); }
-        if (data.record_id) { consultDoctorBtn.style.display = 'inline-block'; consultDoctorBtn.dataset.recordId = data.record_id; }
-        resultBox.style.display = 'block';
-        resultBox.classList.add('persist-visible');
-      }
-    }
-  } catch(e) { console.warn('Failed to restore cached prediction', e); }
-
-  // load babies (if logged in) so user can save prediction to a baby
-  loadBabiesForUpload();
-
-  checkRashButton.addEventListener('click', async () => {
-    let file = imageInput.files[0];
-    if (!file && window.capturedImageBlob){
-      file = new File([window.capturedImageBlob], 'captured.png', { type: 'image/png' });
-    }
-    if (!file) { alert('Please choose or capture an image first'); return; }
-
-    checkRashButton.disabled = true;
-    const prevText = checkRashButton.textContent;
-    checkRashButton.textContent = 'Analyzing...';
-
-    try {
-      const fd = new FormData();
-      fd.append('file', file);
-      // include baby_id if selected so backend will persist SkinRecord
-      const babySel = document.getElementById('babySelect');
-      if (babySel && babySel.value) fd.append('baby_id', babySel.value);
-
-      const lang = localStorage.getItem('lang') || 'en';
-      const token = localStorage.getItem('access_token') || localStorage.getItem('token');
-      const headers = {};
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      const res = await fetch(`${BACKEND_URL}/predict?lang=${encodeURIComponent(lang)}`, {
-        method: 'POST',
-        body: fd,
-        headers
-      });
-
-      if (!res.ok) {
-        let errMsg = `Server returned ${res.status}`;
-        try { const j = await res.json(); if (j && j.error) errMsg = j.error; } catch(e){}
-        throw new Error(errMsg);
-      }
-
-      const data = await res.json();
-
-      // Defensive: map response fields
-      const type = data.rash_type || data.label || 'unknown';
-      let conf = data.confidence ?? data.confidence_raw ?? data.score ?? 0;
-      // Normalize confidence to percent (0-100)
-      if (conf <= 1) conf = conf * 100;
-      rashTypeEl.textContent = type;
-      confidenceEl.textContent = `${conf.toFixed(2)}%`;
-      styleRashTab(type);
-
-      careTipsList.innerHTML = '';
-      preventionList.innerHTML = '';
-      doctorIfList.innerHTML = '';
-      const tips = Array.isArray(data.care_tips) ? data.care_tips : (data.tips || []);
-      const prevs = Array.isArray(data.prevention_tips) ? data.prevention_tips : [];
-      const docIf = Array.isArray(data.consult_doctor_if) ? data.consult_doctor_if : [];
-      (tips).forEach(t => { const li = document.createElement('li'); li.textContent = t; careTipsList.appendChild(li); });
-      (prevs).forEach(t => { const li = document.createElement('li'); li.textContent = t; preventionList.appendChild(li); });
-      (docIf).forEach(t => { const li = document.createElement('li'); li.textContent = t; doctorIfList.appendChild(li); });
-      if (tips.length === 0) { const li = document.createElement('li'); li.textContent = 'No care tips available'; careTipsList.appendChild(li); }
-      if (prevs.length === 0) { const li = document.createElement('li'); li.textContent = 'No prevention tips available'; preventionList.appendChild(li); }
-      if (docIf.length === 0) { const li = document.createElement('li'); li.textContent = 'No consultation guidance'; doctorIfList.appendChild(li); }
-
-      // Show consult button if record id present
-      if (data.record_id) {
-        consultDoctorBtn.style.display = 'inline-block';
-        consultDoctorBtn.dataset.recordId = data.record_id;
-      } else {
-        consultDoctorBtn.style.display = 'none';
-      }
-
-      // Show result (no timers, no auto-hide)
-      resultBox.style.display = 'block';
-      resultBox.classList.add('persist-visible');
-
-      // Cache for persistence
-      try {
-        localStorage.setItem('lastPrediction', JSON.stringify({
-          rash_type: type,
-          confidence_display: `${conf.toFixed(2)}%`,
-          care_tips: tips,
-          prevention_tips: prevs,
-          consult_doctor_if: docIf,
-          record_id: data.record_id || null
-        }));
-      } catch(e) { console.warn('Failed to cache prediction', e); }
-
-      // Show saved-to-history status if backend returned a record id
-      try {
-        const saveStatus = document.getElementById('saveStatus');
-        if (data.record_id) {
-          const babyName = (document.getElementById('babySelect')?.selectedOptions[0]?.text) || '';
-          saveStatus.textContent = (babyName ? `Saved to ${babyName}` : 'Saved to baby history') + ` — Record ID: ${data.record_id}`;
-        } else {
-          saveStatus.textContent = '';
-        }
-      } catch(e){console.warn('Failed updating saveStatus', e)}
-
-      // Removed auto re-assert timeout per user request.
-
-    } catch (err) {
-      console.error(err);
-      alert('Prediction failed: ' + (err.message || 'unknown error'));
-    } finally {
-      checkRashButton.disabled = false;
-      checkRashButton.textContent = prevText;
-    }
+  // camera
+  let stream = null;
+  cameraBtn.addEventListener('click', async ()=>{
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}, audio:false});
+      video.srcObject = stream;
+      cameraModal.style.display = 'flex';
+    }catch(e){ alert('Camera unavailable: '+ (e.message||e)); }
   });
-
-  // Remove any accidental hide attempts by other scripts
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && resultBox.classList.contains('persist-visible')) {
-      resultBox.style.display = 'block';
-    }
-  });
-
-  // Guard against external scripts hiding the result box
-  const observer = new MutationObserver(() => {
-    if (resultBox.classList.contains('persist-visible') && resultBox.style.display === 'none') {
-      resultBox.style.display = 'block';
-    }
-    if (previewBox.style.display === 'none' && previewImage.src) {
-      previewBox.style.display = 'block';
-    }
-  });
-  observer.observe(resultBox, { attributes: true, attributeFilter: ['style', 'class'] });
-  observer.observe(previewBox, { attributes: true, attributeFilter: ['style', 'class'] });
-
-  // Apply soft tone style based on rash type (localized prefix)
-  function styleRashTab(type){
-    const norm = (type || '').toLowerCase();
-    rashTabEl.classList.remove('rash-healthy','rash-mild','rash-fungal','rash-infection','rash-other');
-    let cls = 'rash-other';
-    if (norm === 'healthy') cls = 'rash-healthy';
-    else if (['diaper_rash','heat_rash','eczema_rash'].includes(norm)) cls = 'rash-mild';
-    else if (['ringworm','candidiases'].includes(norm)) cls = 'rash-fungal';
-    else if (['impetigo','chickenpox'].includes(norm)) cls = 'rash-infection';
-    rashTabEl.classList.add(cls);
-    const lang = localStorage.getItem('lang') || 'en';
-    const lbl = lang === 'kn' ? 'ರಾಶಿ' : 'Rash';
-    rashTabEl.innerHTML = `${lbl}: <span id="rashType">${type}</span>`;
-  }
-
-  // Language apply
-  function applyLanguage(lang){
-    document.querySelectorAll('[data-en]').forEach(el => {
-      const en = el.getAttribute('data-en');
-      const kn = el.getAttribute('data-kn');
-      el.textContent = (lang === 'kn' ? kn : en);
-    });
-    document.querySelectorAll('[data-en-prefix]').forEach(el => {
-      const en = el.getAttribute('data-en-prefix');
-      const kn = el.getAttribute('data-kn-prefix');
-      const base = (lang === 'kn' ? kn : en);
-      if (el.id === 'rashTab') {
-        const type = document.getElementById('rashType').textContent || '-';
-        el.innerHTML = `${base}: <span id="rashType">${type}</span>`;
-      } else if (el.classList.contains('rash-confidence')) {
-        const conf = document.getElementById('confidence').textContent || '-';
-        el.innerHTML = `${base}: <span id="confidence">${conf}</span>`;
-      }
-    });
-  }
-  // initial language
-  applyLanguage(savedLang);
-  switcher.addEventListener('change', () => {
-    const lang = switcher.value;
-    localStorage.setItem('lang', lang);
-    applyLanguage(lang);
-    styleRashTab(rashTypeEl.textContent || '-');
-  });
-
-  // OPTIONAL: Block Live Server auto reload (port 5501) so page does not refresh
-  (function disableLiveReload(){
-    if (location.port === '5501' && window.WebSocket) {
-      const OriginalWS = window.WebSocket;
-      window.WebSocket = function(url, protocols){
-        try {
-          if (url && /live|reload|sockjs|livereload/i.test(url)) {
-            console.log('Blocking live-reload websocket:', url);
-            return { readyState: 3, close(){}, send(){}, addEventListener(){}, removeEventListener(){}, onopen:null, onmessage:null, onerror:null, onclose:null };
-          }
-        } catch(e) {}
-        return new OriginalWS(url, protocols);
+  captureBtn.addEventListener('click', ()=>{
+    const w = video.videoWidth || 640, h = video.videoHeight || 480;
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(video,0,0,w,h);
+    canvas.toBlob(blob => {
+      // convert blob -> dataURL so preview can be persisted across reloads
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target.result;
+        showPreview(dataUrl);
+        // keep blob for upload but keep dataURL for persistence/restore
+        window._captureBlob = blob;
+        window._captureDataURL = dataUrl;
+        // clear any previous stored prediction (new image)
+        try { sessionStorage.removeItem('lastPrediction'); sessionStorage.removeItem('lastPreview'); } catch(e){}
       };
+      reader.readAsDataURL(blob);
+      cameraModal.style.display = 'none';
+      stopCamera();
+    }, 'image/png');
+  });
+  closeCam.addEventListener('click', ()=>{ cameraModal.style.display='none'; stopCamera(); });
+  function stopCamera(){ if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; video.srcObject=null; } }
+
+  // reset (also clear stored prediction/preview)
+  resetBtn.addEventListener('click', ()=>{
+    fileInput.value=''; window._captureBlob=null; window._captureDataURL = null;
+    hidePreview();
+    result.style.display='none';
+    try { sessionStorage.removeItem('lastPrediction'); sessionStorage.removeItem('lastPreview'); } catch(e){}
+  });
+
+  // style rash tab
+  function styleTab(type){
+    const t = (type||'').toLowerCase();
+    const tab = document.getElementById('rashTab');
+    tab.className = 'rash-tab rash-other';
+    if(t==='healthy') tab.className='rash-tab rash-healthy';
+    else if(['diaper_rash','heat_rash','eczema_rash'].includes(t)) tab.className='rash-tab rash-mild';
+    else if(['ringworm','candidiases'].includes(t)) tab.className='rash-tab rash-fungal';
+    else if(['impetigo','chickenpox'].includes(t)) tab.className='rash-tab rash-infection';
+  }
+
+  // send to backend
+  checkBtn.addEventListener('click', async ()=>{ 
+    let file = fileInput.files[0] || window._captureBlob;
+    if(!file){ alert(langSelect.value==='kn' ? 'ಚಿತ್ರವನ್ನು ಆಯ್ಕೆಮಾಡಿ ಅಥವಾ ಕ್ಯಾಮರಾ ಬಳಸಿ' : 'Choose or capture an image first'); return; }
+    checkBtn.disabled=true; checkBtn.textContent = langSelect.value==='kn' ? 'ವಿಶ್ಲೇಷಿಸಿಕೊಂಡು...' : 'Analyzing...';
+    try{
+      const fd = new FormData();
+      if (file instanceof Blob && !file.name) file = new File([file], 'capture.png', {type:'image/png'});
+      fd.append('file', file);
+      const res = await fetch(`${BACKEND}/predict?lang=${encodeURIComponent(langSelect.value)}`, { method:'POST', body:fd });
+      if(!res.ok){
+        const txt = await res.text();
+        throw new Error(txt || `Server ${res.status}`);
+      }
+      const j = await res.json();
+      // display fields
+      const type = j.rash_type || j.label || 'unknown';
+      let conf = j.confidence ?? j.confidence_raw ?? j.score ?? 0;
+      if(conf <= 1) conf = conf*100;
+      rashType.textContent = type;
+      confVal.textContent = `${conf.toFixed(2)}%`;
+      styleTab(type);
+      careList.innerHTML=''; prevList.innerHTML='';
+      (j.care_tips||[]).forEach(t=>{ const li=document.createElement('li'); li.textContent = t; careList.appendChild(li); });
+      (j.prevention_tips||[]).forEach(t=>{ const li=document.createElement('li'); li.textContent = t; prevList.appendChild(li); });
+      if((j.care_tips||[]).length===0){ const li=document.createElement('li'); li.textContent = langSelect.value==='kn' ? 'ಯಾವುದೇ ಪೋಷಣೆ ಸೂಚನೆಗಳು ಲಭ್ಯವಿಲ್ಲ' : 'No care tips available'; careList.appendChild(li); }
+      // show result and persist to sessionStorage (so reload won't hide it)
+      result.style.display='block';
+      try {
+        const previewToSave = previewImg.src || window._captureDataURL || '';
+        sessionStorage.setItem('lastPrediction', JSON.stringify({ rash_type: type, confidence: conf, care_tips: j.care_tips||[], prevention_tips: j.prevention_tips||[] }));
+        if (previewToSave) sessionStorage.setItem('lastPreview', previewToSave);
+      } catch (e){ console.warn('persist prediction failed', e); }
+
+      // --- new: save scan record to backend (with image + prediction details) ---
+      try {
+        const saved = await saveScanToServer(j, file);
+        if (saved) {
+          // store for dashboard to pick up quickly
+          try { sessionStorage.setItem('lastSavedScan', JSON.stringify(saved)); } catch(e){}
+          // Ask to open dashboard to view the saved scan
+          if (confirm((langSelect.value==='kn' ? 'ಸ್ಕ್ಯಾನ್ ಉಳಿಸಲಾಗಿದೆ. ಡ್ಯಾಶ್‌ಬೋರ್ಡ್‌ಗೆ ತೆರಳಲು ಇಚ್ಛಿಸುವಿರಾ?' : 'Scan saved. Open Dashboard to view it?'))) {
+            window.location.href = 'parent_dashboard.html';
+          }
+        }
+      } catch(e){ console.warn('saveScanToServer call failed', e); }
+      // ---------------------------------------------------------------------
+
+    }catch(e){
+      console.error(e);
+      alert((langSelect.value==='kn' ? 'ಅಂದಾಜು ವಿಫಲ: ' : 'Prediction failed: ') + (e.message||e));
+    }finally{
+      checkBtn.disabled=false; checkBtn.textContent = langSelect.value==='kn' ? 'ರಾಶಿ ಪರಿಶೀಲನೆ' : 'Check Rash';
     }
+  });
+  
+  // restore prediction on load if present (keeps result visible after incidental reloads)
+  (function init(){
+    applyLang(langSelect.value);
+    try {
+      const pred = sessionStorage.getItem('lastPrediction');
+      const prev = sessionStorage.getItem('lastPreview');
+      if (prev) { showPreview(prev); }
+      if (pred) {
+        const data = JSON.parse(pred);
+        const type = data.rash_type || '-';
+        const conf = data.confidence || 0;
+        rashType.textContent = type;
+        confVal.textContent = `${(typeof conf === 'number' ? conf : parseFloat(conf)).toFixed(2)}%`;
+        styleTab(type);
+        careList.innerHTML=''; prevList.innerHTML='';
+        (data.care_tips||[]).forEach(t=>{ const li=document.createElement('li'); li.textContent = t; careList.appendChild(li); });
+        (data.prevention_tips||[]).forEach(t=>{ const li=document.createElement('li'); li.textContent = t; prevList.appendChild(li); });
+        result.style.display='block';
+      } else {
+        hidePreview();
+        result.style.display='none';
+      }
+    } catch(e) { console.warn('restore failed', e); hidePreview(); result.style.display='none'; }
   })();
 
-  // Consult doctor action (best-effort: will call API if logged in)
-  consultDoctorBtn.addEventListener('click', async () => {
-    const recId = consultDoctorBtn.dataset.recordId;
-    if (!recId) { alert('No record id available'); return; }
-    const token = localStorage.getItem('access_token') || localStorage.getItem('token');
-    if (!token) { alert('Login required to request consultation'); return; }
-
+  // Save scan (image + prediction) to backend so dashboard can show it.
+  async function saveScanToServer(pred, fileBlob){
+    const token = localStorage.getItem('token') || localStorage.getItem('access_token');
     try {
-      const body = { doctor_id: 2, record_id: parseInt(recId) };
-      const res = await fetch(`${BACKEND_URL}/api/consultations/request`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(body)
-      });
-      const j = await res.json();
-      alert(j.message || j.error || 'Request completed');
-    } catch (e) { console.error(e); alert('Consultation request failed'); }
-  });
-</script>
+      const fd = new FormData();
+      // ensure file is a File object with name
+      let file = fileBlob;
+      if (file instanceof Blob && !file.name) file = new File([file], 'capture.png', { type: 'image/png' });
+      fd.append('file', file);
+      // attach parent_id from logged-in user if available
+      const parentId = localStorage.getItem('user_id') || '';
+      if (parentId) fd.append('parent_id', parentId);
+      // optional: if parent selected a baby in dashboard and stored as selected_baby_id
+      const babyId = localStorage.getItem('selected_baby_id') || '';
+      if (babyId) fd.append('baby_id', babyId);
+      fd.append('rash_type', pred.rash_type || pred.label || '');
+      fd.append('confidence', String(pred.confidence ?? pred.score ?? 0));
+      fd.append('care_tips', JSON.stringify(pred.care_tips || []));
+      fd.append('prevention_tips', JSON.stringify(pred.prevention_tips || []));
+      fd.append('raw_response', JSON.stringify(pred || {}));
 
+      const headers = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const saveRes = await fetch(`${BACKEND}/api/scans`, {
+        method: 'POST',
+        headers,
+        body: fd
+      });
+
+      if (!saveRes.ok) {
+        const txt = await saveRes.text();
+        console.warn('Failed to save scan:', txt || saveRes.status);
+        return null;
+      }
+      const saved = await saveRes.json();
+      console.log('Scan saved on server', saved);
+      // optionally persist saved scan id locally
+      try { sessionStorage.setItem('lastSavedScan', JSON.stringify(saved)); } catch(e) {}
+      return saved;
+    } catch(err){
+      console.warn('saveScanToServer error', err);
+      return null;
+    }
+  }
+</script>
 </body>
 </html>

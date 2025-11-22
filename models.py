@@ -56,7 +56,7 @@ class SkinRecord(db.Model):
     __tablename__ = "skin_records"
 
     id = db.Column(db.Integer, primary_key=True)
-    baby_id = db.Column(db.Integer, db.ForeignKey("babies.id"), nullable=False)
+    baby_id = db.Column(db.Integer, db.ForeignKey("babies.id"), nullable=True)
     created_by_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     predicted_rash_type = db.Column(db.String(120))
     confidence_score = db.Column(db.Float)
