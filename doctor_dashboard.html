@@ -116,9 +116,7 @@
         <span>👤</span><span data-en="My Profile" data-kn="ನನ್ನ ಪ್ರೊಫೈಲ್" style="flex:1">My Profile</span>
       </div>
 
-      <div class="nav-item" id="nav_chat" onclick="showSection('chat')">
-        <span>💬</span><span data-en="Chat" data-kn="ಚಾಟ್" style="flex:1">Chat</span>
-      </div>
+      <!-- Chat removed for doctor UI -->
 
       <div style="margin-top:auto; font-size:13px; color:var(--muted);">
         <div data-en="Logged in as" data-kn="ಲಾಗಿನ್ ಆಗಿರುವ ಪಾತ್ರ">Logged in as</div>
@@ -214,38 +212,13 @@
         <div id="profileArea" style="margin-top:12px"></div>
       </section>
 
-      <!-- CHAT -->
-      <section id="section_chat" class="card large" style="display:none;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <h1 id="chatTitle">Chat</h1>
-            <p class="muted" id="chatSubtitle">Connect with patients about consultations</p>
-          </div>
-        </div>
-
-        <div style="margin-top:12px; display:flex; gap:16px;">
-          <div style="flex:1; display:flex; flex-direction:column; gap:8px;">
-            <div id="chatMessages" style="flex:1; overflow:auto; max-height:480px; padding:12px; border-radius:8px; background:#fbfdff; border:1px solid #eef3ff"></div>
-
-            <div style="display:flex; gap:8px; align-items:center;">
-              <input id="chatInput" type="text" placeholder="Type a message" style="flex:1; padding:10px; border-radius:8px; border:1px solid #e6e9ef" />
-              <button id="chatSendBtn" class="btn">Send</button>
-            </div>
-          </div>
-
-          <div style="width:320px;">
-            <h3 data-en="Conversation Info" data-kn="ಸಂಭಾಷಣೆಯ ಮಾಹಿತಿ">Conversation Info</h3>
-            <div id="chatInfo" style="margin-top:8px; padding:12px; border-radius:8px; background:#fff; border:1px solid #eef3ff"></div>
-          </div>
-        </div>
-      </section>
+      <!-- Chat UI removed from doctor dashboard -->
 
     </main>
 
   </div>
 
-  <!-- Chat Floating Button (visible only when chat allowed) -->
-  <div id="chatFab" class="chat-fab" title="Open Chat" onclick="openChat()" hidden>💬</div>
+  <!-- Chat floating button removed -->
 
 <script>
 /* ============================
@@ -290,7 +263,7 @@ setLanguage(currentLang);
 
 /* SECTION NAV */
 function hideAllSections() {
-  ["history","doctors","docprofile","consult_status","profile","chat"].forEach(s => {
+  ["history","doctors","docprofile","consult_status","profile"].forEach(s => {
     const el = document.getElementById("section_" + s);
     if (el) el.style.display = "none";
     const nav = document.getElementById("nav_" + s);
@@ -320,14 +293,7 @@ function showSection(section) {
     if (section === 'history') loadPatients();
     if (section === 'consult_status') loadConsultStatus();
     if (section === 'docprofile' || section === 'profile') loadProfileForm();
-    if (section === 'chat') {
-      // keep chat ready; if a consult is selected this will be loaded by openChatForConsult
-      // otherwise clear view
-      if (!currentChatConsultId) {
-        document.getElementById('chatMessages').innerHTML = `<div class="muted">${currentLang==='en'?'Select a consultation to start chat':'ಚಾಟ್ ಪ್ರಾರಂಭಿಸಲು ಒಂದು ಸಲಹೆ ಆಯ್ಕೆಮಾಡಿ'}</div>`;
-        document.getElementById('chatInfo').innerHTML = '';
-      }
-    }
+    // chat removed — no-op
 }
 
 /* OPEN DASHBOARD (keeps compatibility) */
@@ -342,11 +308,7 @@ function logout() {
   window.location.href = "login.html";
 }
 
-/* Chat control (visible only when allowed) */
-function openChat() {
-  // This should navigate to your chat UI; placeholder:
-  window.location.href = `chat.html?user_id=${userId}`;
-}
+/* Chat removed: doctors no longer use in-app chat */
 
 /* ============================
    Backend calls & UI rendering
@@ -398,10 +360,17 @@ async function loadPatients(){
       const div = document.createElement('div');
       div.className = 'baby-row';
       const last = arr.reduce((a,b)=> (a.requested_at > b.requested_at? a: b));
+      // include thumbnail and latest scan info when available
+      const thumb = last.scan && last.scan.image_url ? `<img src="${escapeHtml(last.scan.image_url)}" style="width:56px;height:40px;object-fit:cover;border-radius:8px;margin-right:12px" />` : '';
+      const rash = escapeHtml((last.scan && last.scan.rash_type) || last.rash_type || '');
+      const when = escapeHtml((last.scan && last.scan.created_at) || last.requested_at || '');
       div.innerHTML = `
-        <div>
-          <strong>${escapeHtml(name)}</strong>
-          <div class="meta">${escapeHtml(last.requested_at || '')} • ${escapeHtml(last.rash_type || '')}</div>
+        <div style="display:flex;gap:12px;align-items:center;flex:1">
+          ${thumb}
+          <div>
+            <strong>${escapeHtml(name)}</strong>
+            <div class="meta">${when} • ${rash}</div>
+          </div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
           <button class="btn ghost">Details</button>
@@ -431,16 +400,24 @@ function renderSelectedPatient(name, arr){
   let html = `<div style="display:flex;flex-direction:column;gap:8px;">`;
   html += `<div style="padding:12px;border-radius:10px;background:#fbfdff;border:1px solid #eef3ff"><strong>${escapeHtml(name)}</strong></div>`;
   html += `<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">`;
-  arr.forEach(s => {
+    arr.forEach(s => {
+      const scan = s.scan || null;
+      const thumb = scan && scan.image_url ? `<img src="${escapeHtml(scan.image_url)}" style="width:72px;height:52px;object-fit:cover;border-radius:8px;margin-right:12px" />` : '';
+      const rash = escapeHtml((scan && scan.rash_type) || s.rash_type || '');
+      const when = escapeHtml((scan && scan.created_at) || s.requested_at || '');
     html += `
       <div class="baby-row">
-        <div>
-          <strong>${escapeHtml(s.rash_type || '')}</strong>
-          <div class="meta">${escapeHtml(s.requested_at || '')}</div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          ${thumb}
+          <div>
+            <strong>${rash}</strong>
+            <div class="meta">${when}</div>
+          </div>
         </div>
         <div>
-          <button class="btn ghost" onclick="viewRecord(${s.record_id})">${currentLang==='en'?'View Record':'ರೆಕಾರ್ಡ್ ವೀಕ್ಷಿಸಿ'}</button>
-          <button class="btn" onclick="openChatForConsult(${s.consultation_id || s.id}, ${s.doctor_id || ''})">${currentLang==='en'?'Chat':'ಚಾಟ್'}</button>
+          <button class="btn ghost" onclick="viewScan(${(scan && scan.id) || (s.record_id || 'null')})">${currentLang==='en'?'View Record':'ರೆಕಾರ್ಡ್ ವೀಕ್ಷಿಸಿ'}</button>
+          <button class="btn" onclick="updateConsultStatus(${s.consultation_id || s.id}, 'accepted')">${currentLang==='en'?'Accept':'ಸ್ವೀಕರಿಸಿ'}</button>
+          <button class="btn ghost" onclick="updateConsultStatus(${s.consultation_id || s.id}, 'rejected')">${currentLang==='en'?'Reject':'ನಿರಾಕರಿಸಿ'}</button>
         </div>
       </div>`;
   });
@@ -766,16 +743,7 @@ async function loadConsultStatus() {
       viewBtn.onclick = () => window.location.href = `consult_view.html?consult_id=${item.id || item.consultation_id}`;
       actions.appendChild(viewBtn);
 
-      // Chat if accepted
-      if (statusKey === "accepted") {
-        const chatBtn = document.createElement("button");
-        chatBtn.className = "btn";
-        chatBtn.textContent = currentLang === "en" ? "Chat" : "ಚಾಟ್";
-        chatBtn.onclick = () => {
-          window.location.href = `chat.html?consult_id=${item.id || item.consultation_id}&doctor_id=${item.doctor_id || item.doctorId || ''}`;
-        };
-        actions.appendChild(chatBtn);
-      }
+      // chat removed: no chat button shown here
 
       // Cancel if pending
       if (statusKey === "pending") {
@@ -815,6 +783,28 @@ async function cancelConsult(consultId) {
   }
 }
 
+/* Doctor updates consultation status (accept/reject/scheduled/cancelled) */
+async function updateConsultStatus(consultId, status) {
+  if (!consultId) return;
+  if (!['accepted','rejected','scheduled','cancelled'].includes(status)) {
+    alert(currentLang==='en' ? 'Invalid status' : 'ಅಮಾನ್ಯ ಸ್ಥಿತಿ');
+    return;
+  }
+  const proceed = (status === 'rejected') ? confirm(currentLang==='en' ? 'Reject this consultation?' : 'ಈ ಸಲಹೆಯನ್ನು ನಿರಾಕರಿಸೋಣವೇ?') : true;
+  if (!proceed) return;
+  try {
+    const payload = { status };
+    const res = await apiFetch(`${BACKEND}/api/consultations/${consultId}/status`, { method: 'PUT', body: JSON.stringify(payload), headers: { 'Content-Type': 'application/json' } });
+    alert(res.message || (currentLang==='en' ? 'Updated' : 'ಅಪ್‌ಡೇಟ್ ಆದ್ದಾಗಿದೆ'));
+    // refresh lists
+    try { await loadPatients(); } catch(_){}
+    try { await loadConsultStatus(); } catch(_){}
+  } catch (e) {
+    console.error('updateConsultStatus error', e);
+    alert(currentLang==='en' ? 'Action failed' : 'ಕ್ರಿಯೆ ವಿಫಲವಾಗಿದೆ');
+  }
+}
+
 /* Translate status label to current language */
 function translateStatus(status) {
   if (!status) return '';
@@ -829,95 +819,7 @@ function translateStatus(status) {
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
-/* When accepted -> open chat */
-let currentChatConsultId = null;
-async function openChatForConsult(consultId, doctorId, patientName) {
-  // Open inline chat section and load messages for the given consult
-  currentChatConsultId = consultId;
-  showSection('chat');
-  // update chat header
-  const title = patientName ? (currentLang==='en'?`Chat — ${patientName}`:`ಚಾಟ್ — ${patientName}`) : (currentLang==='en'?'Chat':'ಚಾಟ್');
-  document.getElementById('chatTitle').textContent = title;
-  document.getElementById('chatSubtitle').textContent = currentLang==='en' ? `Consultation ${consultId}` : `ಸಲಹೆ ${consultId}`;
-  document.getElementById('chatInfo').innerHTML = `<div class="muted">${currentLang==='en'?'Loading conversation...':'ಸಂಭಾಷಣೆಯನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...'}</div>`;
-  await loadChat(consultId);
-}
-
-/* Load chat messages for consultation */
-async function loadChat(consultId) {
-  const messagesEl = document.getElementById('chatMessages');
-  messagesEl.innerHTML = `<div class="muted">${currentLang==='en'?'Loading messages...':'ಸಂದೇಶಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...'}</div>`;
-  try {
-    // Backend expected endpoint: GET /api/chats/<consultId>
-    const res = await apiFetch(`${BACKEND}/api/chats/${consultId}`);
-    const msgs = Array.isArray(res) ? res : (res.messages || []);
-    renderChatMessages(msgs);
-    // populate chat info
-    document.getElementById('chatInfo').innerHTML = `<div><strong>${currentLang==='en'?'Consult ID':'ಸಲಹೆ ID'}:</strong> ${escapeHtml(String(consultId))}</div>`;
-    // attach send handler
-    document.getElementById('chatSendBtn').onclick = () => sendChatMessage(consultId);
-    document.getElementById('chatInput').onkeydown = (e) => { if (e.key === 'Enter') sendChatMessage(consultId); };
-  } catch (e) {
-    console.error('loadChat error', e);
-    messagesEl.innerHTML = `<div class="muted">${currentLang==='en'?'Failed to load messages':'ಸಂದೇಶಗಳನ್ನು ಲೋಡ್ ಮಾಡಲು ವಿಫಲವಾಗಿದೆ'}</div>`;
-    document.getElementById('chatInfo').innerHTML = '';
-  }
-}
-
-function renderChatMessages(msgs) {
-  const messagesEl = document.getElementById('chatMessages');
-  if (!msgs || !msgs.length) {
-    messagesEl.innerHTML = `<div class="muted">${currentLang==='en'?'No messages yet. Start the conversation.':'ಈಗುವರೆಗೂ ಯಾವುದೇ ಸಂದೇಶಗಳಿಲ್ಲ. ಸಂಭಾಷಣೆ ಪ್ರಾರಂಭಿಸಿ.'}</div>`;
-    return;
-  }
-  messagesEl.innerHTML = '';
-  msgs.forEach(m => {
-    const div = document.createElement('div');
-    const cls = (m.sender_role === 'doctor' || m.sender === 'doctor') ? 'doctor-msg' : 'patient-msg';
-    div.style.marginBottom = '8px';
-    div.innerHTML = `
-      <div style="display:flex;flex-direction:column;">
-        <div style="font-size:13px; color:var(--muted)">${escapeHtml(m.sender_name || m.sender || '')} • ${escapeHtml(m.timestamp || m.sent_at || '')}</div>
-        <div style="padding:10px;background:${cls==='doctor-msg'?'#eaf2ff':'#fff'};border-radius:8px;border:1px solid #eef3ff;margin-top:4px">${escapeHtml(m.message || m.text || '')}</div>
-      </div>
-    `;
-    messagesEl.appendChild(div);
-  });
-  // scroll to bottom
-  messagesEl.scrollTop = messagesEl.scrollHeight;
-}
-
-async function sendChatMessage(consultId) {
-  const input = document.getElementById('chatInput');
-  const text = (input.value || '').trim();
-  if (!text) return;
-  try {
-    // POST to backend: /api/chats/<consultId>/send with { sender_role: 'doctor', message }
-    const payload = { sender_role: 'doctor', message: text };
-    const res = await apiFetch(`${BACKEND}/api/chats/${consultId}/send`, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'application/json' } });
-    // optimistic append
-    const newMsg = res && res.message ? res.message : { sender_role: 'doctor', sender_name: fullName, message: text, timestamp: new Date().toISOString() };
-    // if API returns updated messages list, re-render; else append newMsg
-    if (res && Array.isArray(res.messages)) renderChatMessages(res.messages);
-    else {
-      const messagesEl = document.getElementById('chatMessages');
-      const div = document.createElement('div');
-      div.style.marginBottom = '8px';
-      div.innerHTML = `
-        <div style="display:flex;flex-direction:column;">
-          <div style="font-size:13px; color:var(--muted)">${escapeHtml(fullName)} • ${escapeHtml(newMsg.timestamp || new Date().toISOString())}</div>
-          <div style="padding:10px;background:#eaf2ff;border-radius:8px;border:1px solid #eef3ff;margin-top:4px">${escapeHtml(newMsg.message || newMsg.text || '')}</div>
-        </div>
-      `;
-      messagesEl.appendChild(div);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    }
-    input.value = '';
-  } catch (e) {
-    console.error('sendChatMessage error', e);
-    alert(currentLang==='en' ? 'Failed to send message' : 'ಸಂದೇಶ ಕಳುಹಿಸಲು ವಿಫಲವಾಗಿದೆ');
-  }
-}
+/* Chat feature removed from doctor dashboard. */
 
 /* =============================
    Small helpers & startup
@@ -933,14 +835,7 @@ async function startup() {
   await loadDoctors();
   await loadConsultStatus();
 
-  // show/hide chat fab based on any accepted consults
-  const anyAccepted = (() => {
-    try {
-      const list = consultList.querySelectorAll('.baby-row');
-      return Array.from(list).some(r => r.textContent.toLowerCase().includes('accepted') || r.innerHTML.includes('Chat'));
-    } catch { return false; }
-  })();
-  if (anyAccepted) document.getElementById("chatFab").hidden = false;
+  // Chat removed; no floating chat button
 }
 
 /* load everything on start */

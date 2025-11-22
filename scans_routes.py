@@ -165,3 +165,45 @@ def create_scan():
         "image_url": url_for("file", filename=rec.image_path, _external=False),
         "created_at": rec.created_at.isoformat()
     }), 201
+
+
+@scans_bp.route("/<int:scan_id>/assign", methods=["PUT"])
+@jwt_required()
+def assign_scan(scan_id):
+    """Assign an existing scan to a baby (by id).
+
+    Expects JSON: { "baby_id": <int> }
+    Only verifies that the baby exists; callers should be parents assigning their own babies.
+    """
+    try:
+        data = request.get_json() or {}
+        baby_id = data.get("baby_id")
+        if not baby_id:
+            return jsonify({"error": "baby_id required"}), 400
+        try:
+            baby_id = int(baby_id)
+        except Exception:
+            return jsonify({"error": "invalid baby_id"}), 400
+
+        s = SkinRecord.query.get(scan_id)
+        if not s:
+            return jsonify({"error": "scan not found"}), 404
+
+        baby = Baby.query.get(baby_id)
+        if not baby:
+            return jsonify({"error": "baby not found"}), 404
+
+        s.baby_id = baby.id
+        from extensions import db as _db
+        _db.session.add(s)
+        _db.session.commit()
+
+        return jsonify({
+            "id": s.id,
+            "baby_id": s.baby_id,
+            "baby_name": s.baby.name if s.baby else None,
+            "message": "Assigned"
+        })
+    except Exception:
+        logger.exception("Failed assigning scan to baby")
+        return jsonify({"error": "Assign failed"}), 500

@@ -77,6 +77,14 @@
           <div id="rashTab" class="rash-tab rash-other">Rash: <span id="rashType">-</span></div>
           <div class="small" style="margin-top:8px" id="confLine">Confidence: <strong id="confVal">-</strong></div>
         </div>
+        <div style="margin-top:8px">
+          <label for="assignBabySelect" class="small" data-en="Assign to baby (optional)" data-kn="ಶಿಶುವಿಗೆ ನಿಯುಕ್ತ ಮಾಡಿ (ಐಚ್ಛಿಕ)">Assign to baby (optional)</label>
+          <div style="margin-top:6px">
+            <select id="assignBabySelect" style="width:100%;padding:8px;border-radius:6px;border:1px solid #e6e9ef">
+              <option value="">-- No baby / Don't assign --</option>
+            </select>
+          </div>
+        </div>
         <h3 data-en="Care Tips:" data-kn="ಪೋಷಣೆ ಸಲಹೆಗಳು:">Care Tips:</h3>
         <ul id="careList"></ul>
         <h3 data-en="Prevention:" data-kn="ತಡೆಗಟ್ಟುವಿಕೆ:">Prevention:</h3>
@@ -263,6 +271,8 @@
   // restore prediction on load if present (keeps result visible after incidental reloads)
   (function init(){
     applyLang(langSelect.value);
+    // load babies for the logged-in parent (so scans can be assigned)
+    try { loadBabiesForParent(); } catch(e){ console.warn('load babies failed', e); }
     try {
       const pred = sessionStorage.getItem('lastPrediction');
       const prev = sessionStorage.getItem('lastPreview');
@@ -285,6 +295,31 @@
     } catch(e) { console.warn('restore failed', e); hidePreview(); result.style.display='none'; }
   })();
 
+  // load babies for parent and populate assign select
+  async function loadBabiesForParent(){
+    const parentId = localStorage.getItem('user_id') || '';
+    const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+    if (!parentId) return;
+    try {
+      const headers = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch(`${BACKEND}/api/babies/${parentId}`, { headers });
+      if (!res.ok) return;
+      const data = await res.json();
+      const sel = document.getElementById('assignBabySelect');
+      // clear non-empty options except first
+      sel.innerHTML = '<option value="">-- No baby / Don\'t assign --</option>';
+      if (Array.isArray(data) && data.length){
+        data.forEach(b => {
+          const opt = document.createElement('option');
+          opt.value = b.id;
+          opt.text = `${b.name || ('Baby ' + b.id)} ${b.date_of_birth? '• '+b.date_of_birth : ''}`;
+          sel.appendChild(opt);
+        });
+      }
+    } catch (e){ console.warn('loadBabiesForParent error', e); }
+  }
+
   // Save scan (image + prediction) to backend so dashboard can show it.
   async function saveScanToServer(pred, fileBlob){
     const token = localStorage.getItem('token') || localStorage.getItem('access_token');
@@ -297,8 +332,9 @@
       // attach parent_id from logged-in user if available
       const parentId = localStorage.getItem('user_id') || '';
       if (parentId) fd.append('parent_id', parentId);
-      // optional: if parent selected a baby in dashboard and stored as selected_baby_id
-      const babyId = localStorage.getItem('selected_baby_id') || '';
+      // optional: use baby selected in this upload UI (assign scan to baby)
+      const babySel = document.getElementById('assignBabySelect');
+      const babyId = babySel ? (babySel.value || '') : (localStorage.getItem('selected_baby_id') || '');
       if (babyId) fd.append('baby_id', babyId);
       fd.append('rash_type', pred.rash_type || pred.label || '');
       fd.append('confidence', String(pred.confidence ?? pred.score ?? 0));

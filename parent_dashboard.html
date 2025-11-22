@@ -428,24 +428,53 @@ function renderScanList(){
     const row = document.createElement('div');
     row.className = 'baby-row';
     row.style.justifyContent = 'space-between';
-    row.innerHTML = `
+    // Build left area
+    const leftHtml = `
       <div style="display:flex;gap:12px;align-items:center;flex:1">
         <div>
           ${s.image_url ? `<img src="${escapeHtml(s.image_url)}" class="scan-thumb" />` : `<div style="width:64px;height:48px;border-radius:8px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:#334155">IMG</div>`}
         </div>
         <div style="flex:1">
           <div style="font-weight:700">Scan #${escapeHtml(String(s.id || s.scan_id || ''))} — ${escapeHtml(s.rash_type || s.label || '')}</div>
-          <div class="meta">${escapeHtml(s.created_at || s.created || '')} • ${escapeHtml(String(Number(s.confidence || 0)))}%</div>
+          <div class="meta">${escapeHtml(s.created_at || s.created || '')} • ${escapeHtml(String(Number(s.confidence || 0)))}%${s.baby_name ? ' • Baby: ' + escapeHtml(s.baby_name) : ''}</div>
         </div>
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn ghost" onclick="selectScan(${s.id || s.scan_id})">${currentLang==='en'?'View':'ವೀಕ್ಷಣೆಗೆ'}</button>
-      </div>
-    `;
+      </div>`;
+
+    // Build right area: if unassigned show select+assign, otherwise show View
+    let rightHtml = '<div style="display:flex;gap:8px">';
+    // treat placeholder baby names like 'Unassigned' as unassigned as well
+    const isUnassigned = (name => {
+      try { if (!name) return true; const n = String(name).toLowerCase(); return n.includes('unassign') || n.includes('unassigned') || n.includes('placeholder'); } catch { return false; }
+    })(s.baby_name);
+    if (isUnassigned) {
+      // select id unique per scan
+      const selId = `assign_select_row_${s.id}`;
+      rightHtml += `<select id="${selId}" class="filter-select" style="min-width:160px"><option value="">-- ${currentLang==='en'?'Select baby':'ಶಿಶುವನ್ನು ಆಯ್ಕೆಮಾಡಿ'} --</option></select>`;
+      rightHtml += `<button class="btn" onclick="assignScanFromList(${s.id})">${currentLang==='en'?'Assign':'ನಿಯುಕ್ತಿ'}</button>`;
+      // also keep a small view button
+      rightHtml += `<button class="btn ghost" onclick="selectScan(${s.id || s.scan_id})">${currentLang==='en'?'View':'ವೀಕ್ಷಣೆಗೆ'}</button>`;
+    } else {
+      rightHtml += `<button class="btn ghost" onclick="selectScan(${s.id || s.scan_id})">${currentLang==='en'?'View':'ವೀಕ್ಷಣೆಗೆ'}</button>`;
+    }
+    rightHtml += '</div>';
+
+    row.innerHTML = leftHtml + rightHtml;
     wrap.appendChild(row);
   });
 
   container.appendChild(wrap);
+  // After rendering all rows, populate inline selects. Ensure babies are loaded first.
+  (async () => {
+    try {
+      if (!babies || !babies.length) {
+        await loadBabies();
+      }
+      const selects = container.querySelectorAll('select[id^="assign_select_row_"]');
+      selects.forEach(sel => {
+        try { populateAssignSelectRow(sel); } catch(e){ console.warn('populateSelect error', e); }
+      });
+    } catch(e){ console.warn('Failed to populate row selects', e); }
+  })();
 }
 
 /* view single scan (open new page or modal) */
@@ -479,7 +508,7 @@ async function renderSelectedBaby(id) {
     let html = `<div style="display:flex;flex-direction:column;gap:8px;">`;
     html += `<div style="padding:12px;border-radius:10px;background:#fbfdff;border:1px solid #eef3ff;display:flex;gap:12px;align-items:center">`;
     if (scan.image_url) html += `<img src="${escapeHtml(scan.image_url)}" style="width:120px;height:90px;object-fit:cover;border-radius:8px" />`;
-    html += `<div style="flex:1"><strong>Scan #${escapeHtml(String(scan.id || scan.scan_id || ''))}</strong><div class="muted">${escapeHtml(scan.created_at || scan.created || '')}</div></div>`;
+    html += `<div style="flex:1"><strong>Scan #${escapeHtml(String(scan.id || scan.scan_id || ''))}</strong><div class="muted">${escapeHtml(scan.created_at || scan.created || '')}${scan.baby_name ? ' • Baby: ' + escapeHtml(scan.baby_name) : ''}</div></div>`;
     html += `</div>`;
 
     html += `<div style="padding:12px;border-radius:8px;border:1px solid #eef3ff;background:#fff;margin-top:8px">`;
@@ -497,8 +526,15 @@ async function renderSelectedBaby(id) {
     html += `<div style="margin-top:8px;display:flex;gap:8px"><button class="btn" onclick="viewScan(${scan.id || scan.scan_id})">${currentLang==='en'?'Open Full View':'ಪೂರ್ಣ ವೀಕ್ಷಣೆ'}</button></div>`;
     html += `</div>`;
 
+    // If scan is unassigned, provide an assign-to-baby UI. Also treat placeholder baby name as unassigned.
+    const detailIsUnassigned = (!scan.baby_id) || (scan.baby_name && (String(scan.baby_name).toLowerCase().includes('unassign') || String(scan.baby_name).toLowerCase().includes('placeholder')));
+    if (detailIsUnassigned) {
+      html += `<div style="margin-top:12px;padding:12px;border-radius:8px;border:1px solid #eef3ff;background:#fbfdff"><label class="small">${currentLang==='en'?'Assign this scan to a child':'ಈ ಸ್ಕ್ಯಾನ್ ಅನ್ನು ಮಕ್ಕಳಿಗೆ ನಿಯುಕ್ತ ಮಾಡಿ'}</label><div style="margin-top:8px"><select id="assignScanBabySelect" class="filter-select"><option value="">-- ${currentLang==='en'?'Select baby':'ಶಿಶುವನ್ನು ಆಯ್ಕೆಮಾಡಿ'} --</option></select></div><div style="margin-top:8px"><button class="btn" onclick="assignScan(${scan.id})">${currentLang==='en'?'Assign':'ನಿಯುಕ್ತಿ'}</button></div></div>`;
+    }
+
     html += `</div>`;
     area.innerHTML = html;
+    if (!scan.baby_id) populateAssignSelectForScan(scan.id);
     return;
   } catch (e) {
     // If scan endpoint failed, try baby history (backwards compatibility)
@@ -726,6 +762,100 @@ async function addChild(){
   }
 }
 
+/* Populate the assign-to-baby select, scoped for a particular scan view */
+function populateAssignSelectForScan(scanId){
+  try{
+    const sel = document.getElementById('assignScanBabySelect');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">-- ' + (currentLang==='en' ? 'Select baby' : 'ಶಿಶುವನ್ನು ಆಯ್ಕೆಮಾಡಿ') + ' --</option>';
+    if (!babies || !babies.length) return;
+    babies.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.id;
+      opt.text = (b.name || ('Baby ' + b.id)) + (b.date_of_birth ? ' • ' + b.date_of_birth : '');
+      sel.appendChild(opt);
+    });
+  } catch(e){ console.warn('populateAssignSelectForScan error', e); }
+}
+
+/* Assign a scan to a baby by calling the backend assign endpoint */
+async function assignScan(scanId){
+  const sel = document.getElementById('assignScanBabySelect');
+  if (!sel) return alert(currentLang==='en' ? 'No baby selected' : 'ಯಾವುದೇ ಶಿಶು ಆಯ್ಕೆಮಾಡಿಲ್ಲ');
+  const babyId = sel.value;
+  if (!babyId) return alert(currentLang==='en' ? 'Please select a baby' : 'ದಯವಿಟ್ಟು ಶಿಶುವನ್ನು ಆಯ್ಕೆಮಾಡಿ');
+  if (!confirm(currentLang==='en' ? 'Assign this scan to the selected child?' : 'ಈ ಸ್ಕ್ಯಾನ್ ಅನ್ನು ಆಯ್ದ ಮಕ್ಕಳಿಗೆ ನಿಯುಕ್ತಗೊಳಿಸಲು ಅನುಮತಿಸು?')) return;
+  try{
+    const res = await apiFetch(`${BACKEND}/api/scans/${scanId}/assign`, { method: 'PUT', body: JSON.stringify({ baby_id: Number(babyId) }), headers: { 'Content-Type': 'application/json' } });
+    alert(res.message || (currentLang==='en' ? 'Assigned' : 'ನಿಯುಕ್ತಿ ಮಾಡಲಾಗಿದೆ'));
+    // refresh lists and view
+    try { await loadScans(); } catch(_){}
+    try { await loadBabies(); } catch(_){}
+    try { await renderSelectedBaby(scanId); } catch(_){}
+  } catch(e){ console.error('assignScan error', e); alert(currentLang==='en' ? 'Assign failed' : 'ನಿಯುಕ್ತಿ ವಿಫಲವಾಗಿದೆ'); }
+}
+
+/* Populate a select element (row) with babies for inline assign */
+function populateAssignSelectRow(selectElem){
+  try{
+    if (!selectElem) return;
+    // clear leaving the placeholder first option
+    selectElem.innerHTML = '<option value="">-- ' + (currentLang==='en' ? 'Select baby' : 'ಶಿಶುವನ್ನು ಆಯ್ಕೆಮಾಡಿ') + ' --</option>';
+    if (!babies || !babies.length) return;
+    babies.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.id;
+      opt.text = (b.name || ('Baby ' + b.id)) + (b.date_of_birth ? ' • ' + b.date_of_birth : '');
+      selectElem.appendChild(opt);
+    });
+    // default-select the first baby to make assigning faster
+    try { selectElem.value = babies[0].id; } catch(e){}
+  } catch(e){ console.warn('populateAssignSelectRow error', e); }
+}
+
+/* Assign from the inline list select */
+async function assignScanFromList(scanId){
+  const sel = document.getElementById(`assign_select_row_${scanId}`);
+  if (!sel) return alert(currentLang==='en' ? 'No baby selected' : 'ಯಾವುದೇ ಶಿಶು ಆಯ್ಕೆಮಾಡಿಲ್ಲ');
+  const babyId = sel.value;
+  if (!babyId) return alert(currentLang==='en' ? 'Please select a baby' : 'ದಯವಿಟ್ಟು ಶಿಶುವನ್ನು ಆಯ್ಕೆಮಾಡಿ');
+  if (!confirm(currentLang==='en' ? 'Assign this scan to the selected child?' : 'ಈ ಸ್ಕ್ಯಾನ್ ಅನ್ನು ಆಯ್ದ ಮಕ್ಕಳಿಗೆ ನಿಯುಕ್ತಗೊಳಿಸಲು ಅನುಮತಿಸು?')) return;
+  try{
+    const res = await apiFetch(`${BACKEND}/api/scans/${scanId}/assign`, { method: 'PUT', body: JSON.stringify({ baby_id: Number(babyId) }), headers: { 'Content-Type': 'application/json' } });
+    alert(res.message || (currentLang==='en' ? 'Assigned' : 'ನಿಯುಕ್ತಿ ಮಾಡಲಾಗಿದೆ'));
+    // update local scans array and UI for this row without full reload
+    try {
+      // update scans[] if present
+      const idx = scans.findIndex(x => Number(x.id) === Number(scanId) || Number(x.scan_id) === Number(scanId));
+      const babyObj = (babies || []).find(b => String(b.id) === String(babyId));
+      if (idx !== -1) {
+        scans[idx].baby_id = Number(babyId);
+        scans[idx].baby_name = babyObj ? babyObj.name : (res.baby_name || '');
+      }
+      // update the row DOM: remove select and assign button, show View and update meta with baby name
+      const selElem = document.getElementById(`assign_select_row_${scanId}`);
+      if (selElem) {
+        const row = selElem.closest('.baby-row');
+        if (row) {
+          // update left meta
+          const meta = row.querySelector('.meta');
+          if (meta) {
+            // append or replace baby part
+            const existing = meta.textContent || '';
+            const withoutBaby = existing.split('• Baby:')[0].trim();
+            meta.textContent = `${withoutBaby} • Baby: ${babyObj ? babyObj.name : (res.baby_name || '')}`;
+          }
+          // replace right actions with a View button
+          const actions = selElem.parentElement;
+          if (actions) actions.innerHTML = `<button class="btn ghost" onclick="selectScan(${scanId})">${currentLang==='en'?'View':'ವೀಕ್ಷಣೆಗೆ'}</button>`;
+        }
+      }
+      // update babies list in case server returned updated list
+      try { await loadBabies(); } catch(e){}
+    } catch(e){ console.warn('assignScanFromList UI update failed', e); }
+  } catch(e){ console.error('assignScanFromList error', e); alert(currentLang==='en' ? 'Assign failed' : 'ನಿಯುಕ್ತಿ ವಿಫಲವಾಗಿದೆ'); }
+}
+
 /* open booking form for a doctor */
 function openBookingForm(doctorId) {
   const container = document.getElementById("bookingFormContainer");
@@ -735,6 +865,11 @@ function openBookingForm(doctorId) {
 
       <label data-en="Select Baby" data-kn="ಶಿಶುವನ್ನು ಆಯ್ಕೆಮಾಡಿ">${currentLang==='en'?'Select Baby':'ಶಿಶುವನ್ನು ಆಯ್ಕೆಮಾಡಿ'}</label>
       <select id="bookBabySelect" style="width:100%;padding:8px;border-radius:8px;margin-top:6px"></select>
+
+      <label style="margin-top:8px" data-en="Select Scan (optional)" data-kn="ಸ್ಕ್ಯಾನ್ ಆಯ್ಕೆಮಾಡಿ (ಐಚ್ಛಿಕ)">Select Scan (optional)</label>
+      <select id="bookScanSelect" style="width:100%;padding:8px;border-radius:8px;margin-top:6px">
+        <option value="">-- ${currentLang==='en'?'Latest scan':'ಇತ್ತೀಚಿನ ಸ್ಕ್ಯಾನ್'} --</option>
+      </select>
 
       <label style="margin-top:8px" data-en="Choose Date" data-kn="ದಿನಾಂಕವನ್ನು ಆಯ್ಕೆಮಾಡಿ">${currentLang==='en'?'Choose Date':'ದಿನಾಂಕವನ್ನು ಆಯ್ಕೆಮಾಡಿ'}</label>
       <input id="bookDate" type="date" style="width:100%;padding:8px;border-radius:8px;margin-top:6px"/>
@@ -759,6 +894,22 @@ function openBookingForm(doctorId) {
     opt.value = b.id; opt.text = b.name;
     sel.appendChild(opt);
   });
+  // populate scans for selected baby
+  const scanSel = document.getElementById('bookScanSelect');
+  function populateBookScans() {
+    const babyId = sel.value;
+    scanSel.innerHTML = '<option value="">-- ' + (currentLang==='en'?'Latest scan':'ಇತ್ತೀಚಿನ ಸ್ಕ್ಯಾನ್') + ' --</option>';
+    const list = scans.filter(s => String(s.baby_id) === String(babyId));
+    if (!list.length) {
+      const o = document.createElement('option'); o.value = ''; o.text = currentLang==='en' ? '-- No scans --' : '-- ಯಾವುದೇ ಸ್ಕ್ಯಾನ್ಸ್ ಇಲ್ಲ --'; scanSel.appendChild(o); return;
+    }
+    list.forEach(s => {
+      const o = document.createElement('option'); o.value = s.id; o.text = `Scan #${s.id} — ${s.rash_type || ''} • ${s.created_at || ''}`; scanSel.appendChild(o);
+    });
+  }
+  sel.addEventListener('change', populateBookScans);
+  // initial populate
+  try { populateBookScans(); } catch (e) {}
 }
 
 /* confirm booking API */
@@ -774,6 +925,7 @@ async function confirmBooking(doctorId) {
   }
 
   try {
+    const scanId = (document.getElementById('bookScanSelect') && document.getElementById('bookScanSelect').value) || null;
     const payload = {
       parent_id: userId,
       baby_id: babyId,
@@ -782,6 +934,7 @@ async function confirmBooking(doctorId) {
       time,
       reason
     };
+    if (scanId) payload.scan_id = scanId;
     const res = await apiFetch(`${BACKEND}/api/consultations/book`, { method: "POST", body: JSON.stringify(payload), headers: { "Content-Type": "application/json" }});
     alert(res.message || (currentLang==='en' ? 'Booked' : 'ಬುಕ್ ಆಗಿದೆ'));
     await loadConsultStatus();
