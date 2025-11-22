@@ -18,6 +18,9 @@ class User(db.Model):
     # role = parent / doctor
     role = db.Column(db.String(20), nullable=False, default="parent")
 
+    # contact phone number (optional)
+    phone = db.Column(db.String(30))
+
     # doctor-specific fields
     specialization = db.Column(db.String(120))
     experience = db.Column(db.Integer)

@@ -668,6 +668,11 @@ async function saveParentProfile(){
       try { localStorage.setItem('full_name', newName); } catch(e){}
       document.getElementById('userName').textContent = newName;
     }
+    // persist phone locally as well so UI shows it on subsequent logins
+    const newPhone = payload.phone || (res.user && res.user.phone) || null;
+    if (newPhone) {
+      try { localStorage.setItem('phone', newPhone); } catch(e){}
+    }
     // refresh profile from server to ensure UI reflects persisted state
     try { await loadParentProfile(); } catch(e) { /* ignore refresh errors */ }
   } catch(e){

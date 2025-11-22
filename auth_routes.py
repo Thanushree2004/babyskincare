@@ -76,5 +76,6 @@ def login():
         "access_token": access_token,
         "user_id": user.id,
         "full_name": user.full_name,
+        "phone": getattr(user, 'phone', None),
         "role": user.role.lower()
     })
