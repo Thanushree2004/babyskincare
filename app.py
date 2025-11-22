@@ -92,6 +92,7 @@ def create_app():
         ("predict_routes", "predict_bp"),
         # scans API provides listing/creation of saved scans used by dashboard
         ("scans_routes", "scans_bp"),
+        ("babies_routes", "babies_bp"),
         ("parent_routes", "parent_bp"),
     ]
 
