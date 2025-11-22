@@ -93,6 +93,9 @@ def create_app():
         # scans API provides listing/creation of saved scans used by dashboard
         ("scans_routes", "scans_bp"),
         ("babies_routes", "babies_bp"),
+            ("doctors_routes", "doctors_bp"),
+            ("doctor_routes", "doctor_bp"),
+            ("consultations_routes", "consults_bp"),
         ("parent_routes", "parent_bp"),
     ]
 
