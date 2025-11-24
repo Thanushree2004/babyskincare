@@ -453,8 +453,10 @@ function renderScanList(){
       rightHtml += `<button class="btn" onclick="assignScanFromList(${s.id})">${currentLang==='en'?'Assign':'ನಿಯುಕ್ತಿ'}</button>`;
       // also keep a small view button
       rightHtml += `<button class="btn ghost" onclick="selectScan(${s.id || s.scan_id})">${currentLang==='en'?'View':'ವೀಕ್ಷಣೆಗೆ'}</button>`;
+      rightHtml += `<button class="btn danger" onclick="deleteScan(${s.id})">${currentLang==='en' ? 'Delete' : 'ಬಳಿದುಹಾಕಿ'}</button>`;
     } else {
       rightHtml += `<button class="btn ghost" onclick="selectScan(${s.id || s.scan_id})">${currentLang==='en'?'View':'ವೀಕ್ಷಣೆಗೆ'}</button>`;
+      rightHtml += `<button class="btn danger" onclick="deleteScan(${s.id})">${currentLang==='en' ? 'Delete' : 'ಬಳಿದುಹಾಕಿ'}</button>`;
     }
     rightHtml += '</div>';
 
@@ -854,6 +856,31 @@ async function assignScanFromList(scanId){
       try { await loadBabies(); } catch(e){}
     } catch(e){ console.warn('assignScanFromList UI update failed', e); }
   } catch(e){ console.error('assignScanFromList error', e); alert(currentLang==='en' ? 'Assign failed' : 'ನಿಯುಕ್ತಿ ವಿಫಲವಾಗಿದೆ'); }
+}
+
+/* ----------------------------
+   Delete scan
+   ---------------------------- */
+async function deleteScan(scanId){
+  if (!confirm(currentLang==='en' ? 'Delete this scan? This cannot be undone.' : 'ಈ ಸ್ಕ್ಯಾನ್ ಅನ್ನು ಅಳಿಸಿಬಿಟ್ಟರೆ ಹಿಂದಕ್ಕೆ ಬರಲಾರದು. ಅಳಿಸಬೇಕೇ?')) return;
+  try{
+    const res = await apiFetch(`${BACKEND}/api/scans/${scanId}`, { method: 'DELETE' });
+    if (res && res.message) {
+      // remove from local scans array and re-render
+      scans = (scans || []).filter(s => Number(s.id) !== Number(scanId) && Number(s.scan_id || -1) !== Number(scanId));
+      try { renderScanList(); } catch(e){}
+      // if the deleted scan is currently selected in the detail pane, clear it
+      try { const area = document.getElementById('selectedBabyCard'); if (area && area.innerHTML && area.innerHTML.indexOf(`Scan #${scanId}`)!==-1) area.innerHTML = `<div class="muted">${currentLang==='en'?'No item selected.':'ಯಾವುದೇ ಐಟಂ ಆಯ್ದಿಲ್ಲ.'}</div>`; } catch(e){}
+      alert(currentLang==='en' ? 'Deleted' : 'ಅಳಿಸಲಾಯಿತು');
+    } else if (res && res.error) {
+      alert(res.error);
+    } else {
+      alert(currentLang==='en' ? 'Delete failed' : 'ಅಳಿಸಲಾಗಲಿಲ್ಲ');
+    }
+  } catch(e){
+    console.error('deleteScan error', e);
+    alert(currentLang==='en' ? 'Delete failed' : 'ಅಳಿಸಲಾಗಲಿಲ್ಲ');
+  }
 }
 
 /* open booking form for a doctor */

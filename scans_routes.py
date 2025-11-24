@@ -32,6 +32,7 @@ def list_scans():
         for s in items:
             out.append({
                 "id": s.id,
+                "created_by_id": s.created_by_id,
                 "baby_id": s.baby_id,
                 "baby_name": s.baby.name if s.baby else None,
                 "rash_type": s.predicted_rash_type,
@@ -78,6 +79,7 @@ def get_scan(scan_id):
 
     return jsonify({
         "id": s.id,
+        "created_by_id": s.created_by_id,
         "baby_id": s.baby_id,
         "baby_name": s.baby.name if s.baby else None,
         "rash_type": s.predicted_rash_type,
@@ -87,6 +89,43 @@ def get_scan(scan_id):
         "image_url": url_for("file", filename=s.image_path, _external=False) if s.image_path else None,
         "created_at": s.created_at.isoformat()
     })
+
+
+@scans_bp.route('/<int:scan_id>', methods=['DELETE'])
+@jwt_required()
+def delete_scan(scan_id):
+    """Delete a scan. Only the user who created the scan may delete it.
+
+    This will attempt to remove the associated file from the uploads directory
+    and delete the DB record.
+    """
+    uid = get_jwt_identity()
+    try:
+        s = SkinRecord.query.get(scan_id)
+        if not s:
+            return jsonify({"error": "Not found"}), 404
+
+        # Only allow creator to delete
+        if uid is None or int(uid) != int(s.created_by_id):
+            return jsonify({"error": "Forbidden"}), 403
+
+        # attempt to delete file
+        try:
+            if s.image_path and hasattr(current_app, 'uploads_path'):
+                p = os.path.join(current_app.uploads_path, s.image_path)
+                if os.path.exists(p):
+                    os.remove(p)
+        except Exception:
+            current_app.logger.warning('Failed to remove scan file for id %s', scan_id, exc_info=True)
+
+        # delete DB record
+        db.session.delete(s)
+        db.session.commit()
+        return jsonify({"message": "Deleted"})
+    except Exception:
+        db.session.rollback()
+        logger.exception('Failed deleting scan')
+        return jsonify({"error": "Delete failed"}), 500
 
 
 @scans_bp.route("", methods=["POST"])
