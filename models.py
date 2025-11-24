@@ -1,4 +1,3 @@
-# filepath: c:\Users\thanu\OneDrive\Desktop\babyskincare\models.py
 from extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
@@ -53,7 +52,7 @@ class Baby(db.Model):
 
 
 # ================================
-# SKIN RECORD (used by predict_routes)
+# SKIN RECORD
 # ================================
 class SkinRecord(db.Model):
     __tablename__ = "skin_records"
@@ -122,15 +121,27 @@ class Consultation(db.Model):
     status = db.Column(db.String(20), default="pending")
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # ...existing code...
+
+    # ===========================
+    # NEW FIELDS (Safe additions)
+    # ===========================
+    doctor_notes = db.Column(db.Text)            # doctor can write notes
+    prescription_path = db.Column(db.String(255))  # pdf or image file path
+
+
+# ================================
+# CHAT SYSTEM
+# ================================
 class Conversation(db.Model):
     __tablename__ = "conversations"
     id = db.Column(db.Integer, primary_key=True)
     parent_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     doctor_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    # scope conversation to a specific consultation when available
+    consultation_id = db.Column(db.Integer, db.ForeignKey("consultations.id"), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     messages = db.relationship("Message", backref="conversation", cascade="all, delete-orphan")
+
 
 class Message(db.Model):
     __tablename__ = "messages"
@@ -140,4 +151,3 @@ class Message(db.Model):
     text = db.Column(db.Text)
     read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-# ...existing code...

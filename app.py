@@ -1,6 +1,6 @@
 import os
 import logging
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, send_from_directory, request
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -129,6 +129,20 @@ def create_app():
         resp.headers.setdefault('X-Frame-Options', 'SAMEORIGIN')
         resp.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
         resp.headers.setdefault('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+        # Ensure CORS header exists for simple cases (helpful for error responses
+        # when the CORS extension may not have added the header yet).
+        try:
+            origin = request.headers.get('Origin')
+            if origin:
+                resp.headers.setdefault('Access-Control-Allow-Origin', origin)
+                resp.headers.setdefault('Access-Control-Allow-Credentials', 'true')
+                # Allow common headers used by the frontend during preflight
+                resp.headers.setdefault('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+                # Allow common HTTP methods (including OPTIONS for preflight)
+                resp.headers.setdefault('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+        except Exception:
+            # If request is not available for some reason, skip adding CORS header
+            pass
         return resp
 
     @app.route("/instance/uploads/<path:filename>")

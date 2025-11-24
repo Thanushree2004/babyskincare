@@ -1,114 +1,348 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Consultation Details</title>
+
   <style>
     body { font-family: Arial, sans-serif; background:#f6f9fc; margin:0; padding:20px; }
-    .container { max-width:900px; margin:24px auto; background:#fff; padding:24px; border-radius:12px;
-                 box-shadow:0 6px 18px rgba(0,0,0,0.06); }
-    .back-btn { background:#0d6efd; color:#fff; border:none; padding:10px 16px; border-radius:8px;
-                cursor:pointer; margin-bottom:18px; }
+    .container { max-width:900px; margin:24px auto; background:#fff; padding:24px; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
+    .back-btn { background:#0d6efd; color:#fff; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; margin-bottom:18px; }
     .title { font-size:22px; font-weight:700; margin-bottom:8px; }
     .muted { color:#6b7280; margin-bottom:8px; }
     .info-row { display:flex; gap:12px; align-items:center; margin-bottom:10px; }
     .chip { background:#eef2ff; color:#1e3a8a; padding:6px 10px; border-radius:999px; font-weight:600; }
     h3 { margin-top:18px; margin-bottom:8px; }
     p, li { line-height:1.5; }
-    ul { padding-left:20px; }
-    .error { color:#991b1b; }
+    textarea { width:100%; min-height:120px; padding:10px; font-size:14px; border-radius:8px; border:1px solid #ddd; }
+    .btn { background:#0d6efd; color:#fff; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; }
+    .row { display:flex; gap:12px; align-items:center; margin-top:10px; }
+    .chat-box { border:1px solid #eee; padding:12px; border-radius:8px; max-height:300px; overflow:auto; background:#fafafa; }
+    .msg { margin-bottom:8px; padding:8px 10px; border-radius:8px; display:inline-block; max-width:75%; }
+    .msg.me { background:#0d6efd; color:#fff; margin-left:auto; }
+    .msg.they { background:#fff; color:#111; border:1px solid #eee; }
+    .small { font-size:13px; color:#6b7280; }
+    .attachment { margin-top:8px; }
   </style>
 </head>
-<body>
-  <div class="container">
-    <button class="back-btn" onclick="history.back()">← Back</button>
 
-    <div id="consultDetails">
-      <h2 class="title">Loading Consultation...</h2>
+<body>
+<div class="container">
+  <button class="back-btn" onclick="history.back()">← Back</button>
+  <div id="consultDetails"><h2 class="title">Loading Consultation...</h2></div>
+
+  <hr style="margin:18px 0" />
+
+  <div>
+    <h3>Doctor Notes</h3>
+    <textarea id="doctorNotes"></textarea>
+    <div class="row">
+      <button id="saveNotesBtn" class="btn">Save Notes</button>
+      <span id="notesStatus" class="small"></span>
     </div>
   </div>
 
-  <script>
-    (async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const consultId = urlParams.get("consult_id");
-      const out = document.getElementById("consultDetails");
+  <div style="margin-top:18px">
+    <h3>Prescription Upload</h3>
+    <input type="file" id="prescriptionFile" accept=".pdf,image/*" />
+    <div class="row">
+      <button id="uploadPrescriptionBtn" class="btn">Upload Prescription</button>
+      <span id="uploadStatus" class="small"></span>
+    </div>
+    <div id="currentPrescription" class="attachment"></div>
+  </div>
 
-      if (!consultId) {
-        out.innerHTML = "<p class='error'>Invalid consult ID</p>";
-        return;
+  <div style="margin-top:22px">
+    <h3>Chat</h3>
+    <div id="chatBox" class="chat-box"></div>
+    <div class="row">
+      <input id="chatInput" type="text" placeholder="Type message..." 
+        style="flex:1; padding:8px; border-radius:8px; border:1px solid #ddd"/>
+      <button id="sendChatBtn" class="btn">Send</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- =====================  JAVASCRIPT  ======================= -->
+<script>
+
+const consultId = new URLSearchParams(window.location.search).get("consult_id");
+window.consultIdPresent = !!consultId;
+
+// Ensure we have a valid consult id (guard against missing/invalid links)
+if (!consultId) {
+  const out = document.getElementById('consultDetails');
+  out.innerHTML = '<p class="error">Missing consult_id in URL</p>';
+  const back = document.createElement('button');
+  back.className = 'btn';
+  back.textContent = 'Back to Consultations';
+  back.onclick = () => { window.history.back(); };
+  out.appendChild(back);
+  console.warn('consult_view: missing consult_id in URL');
+  // Disable interactive controls if present
+  try {
+    document.getElementById('saveNotesBtn').disabled = true;
+    document.getElementById('uploadPrescriptionBtn').disabled = true;
+    document.getElementById('sendChatBtn').disabled = true;
+  } catch (e) {}
+  // Mark missing and do not throw — initialization will skip interactive startup.
+  window.consultIdPresent = false;
+}
+
+function getToken() {
+  const t = localStorage.getItem("access_token") || localStorage.getItem("token");
+  return t ? (t.startsWith("Bearer") ? t : "Bearer " + t) : null;
+}
+
+function authHeaders(extra = {}) {
+  return Object.assign({}, {
+    "Authorization": getToken(),
+    "Accept": "application/json"
+  }, extra);
+}
+
+let consultData = null;
+async function fetchConsult() {
+  const out = document.getElementById("consultDetails");
+
+  try {
+    // Force a fresh fetch to avoid stale/cached responses (some dev setups cache aggressively)
+    const url = `http://127.0.0.1:5000/api/consultations/${consultId}?_=${Date.now()}`;
+    const res = await fetch(url, { headers: authHeaders(), cache: 'no-store' });
+
+    const data = await res.json();
+    if (!res.ok) {
+      out.innerHTML = `<p class="error">${data.error}</p>`;
+      return null;
+    }
+
+    out.innerHTML = `
+      <h2 class="title">Consultation Details</h2>
+      <div class="muted">Loaded consult_id: ${consultId}</div>
+      <div class="muted">Consult #${data.id}</div>
+      <div class="info-row">
+        <div><b>Parent:</b> ${data.parent_name || '—'}</div>
+        <div><b>Baby:</b> ${data.baby_name || '—'} <span class="small">(id: ${data.baby_id || '—'})</span></div>
+        <div class="chip">${(data.status || '').toUpperCase()}</div>
+      </div>
+
+      <h3>Symptoms</h3>
+      <p>${data.symptoms || "No symptoms reported."}</p>
+
+      <h3>Doctor Notes</h3>
+      <p id="notesPreview">${data.doctor_notes ? data.doctor_notes.replace(/\n/g,"<br>") : "No notes yet."}</p>
+    `;
+
+    document.getElementById("doctorNotes").value = data.doctor_notes || "";
+
+    // Prescription: prefer a full URL from backend, otherwise build one from the stored filename
+    if (data.prescription_url) {
+      // ensure absolute
+      const href = data.prescription_url.startsWith('http') ? data.prescription_url : (location.origin + data.prescription_url);
+      document.getElementById("currentPrescription").innerHTML =
+        `<a href="${href}" target="_blank">View Prescription</a>`;
+    } else if (data.prescription_path) {
+      const href = location.origin + `/instance/uploads/${data.prescription_path}`;
+      document.getElementById("currentPrescription").innerHTML =
+        `<a href="${href}" target="_blank">View Prescription</a>`;
+    } else {
+      document.getElementById("currentPrescription").innerHTML = "No prescription uploaded.";
+    }
+
+    // Raw debug output (helps confirm backend response)
+    let rawEl = document.getElementById('rawResponse');
+    if (!rawEl) {
+      rawEl = document.createElement('pre');
+      rawEl.id = 'rawResponse';
+      rawEl.style.marginTop = '12px';
+      rawEl.style.background = '#f3f4f6';
+      rawEl.style.padding = '10px';
+      rawEl.style.borderRadius = '8px';
+      rawEl.style.maxHeight = '240px';
+      rawEl.style.overflow = 'auto';
+      out.appendChild(rawEl);
+    }
+    rawEl.textContent = JSON.stringify(data, null, 2);
+
+    console.log('consult_view: fetched', { url, consultId, data });
+    consultData = data;
+    return data;
+  } 
+  catch (e) {
+    console.error(e);
+    out.innerHTML = "<p class='error'>Error loading consultation.</p>";
+    return null;
+  }
+}
+
+
+// --------------------- SAVE NOTES ---------------------
+document.getElementById("saveNotesBtn").addEventListener('click', async (e) => {
+  try {
+    const notes = document.getElementById("doctorNotes").value;
+    console.log('consult_view: saving notes for consult', consultId);
+
+    const res = await fetch(
+      `http://127.0.0.1:5000/api/consultations/${consultId}/notes`,
+      {
+        method: "PUT",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ doctor_notes: notes })
       }
+    );
 
-      // Build headers and try to attach token from localStorage (common keys)
-      const headers = new Headers({ "Accept": "application/json" });
-      const possibleKeys = ["access_token", "token", "jwt", "auth_token"];
-      for (const k of possibleKeys) {
-        const val = localStorage.getItem(k);
-        if (val) {
-          // support tokens stored as "Bearer <token>" or raw token
-          headers.set("Authorization", val.startsWith("Bearer ") ? val : `Bearer ${val}`);
-          break;
-        }
-      }
+    let data = {};
+    try { data = await res.json(); } catch (err) { console.warn('no json response for save notes', err); }
 
-      // Fetch (send cookies too in case you use cookie-based sessions)
-      try {
-        const res = await fetch(`http://127.0.0.1:5000/api/consultations/${consultId}`, {
-          method: "GET",
-          headers,
-          credentials: "include"
-        });
+    if (res.ok) {
+      document.getElementById("notesStatus").innerText = "Saved!";
+      document.getElementById("notesPreview").innerHTML = notes.replace(/\n/g,"<br>");
+    } else {
+      const msg = data && data.error ? data.error : `Save failed (status ${res.status})`;
+      document.getElementById("notesStatus").innerText = msg;
+      console.error('consult_view: save notes failed', res.status, data);
+    }
+  } catch (err) {
+    console.error('consult_view: saveNotes error', err);
+    document.getElementById("notesStatus").innerText = 'Error saving';
+  }
+});
 
-        // If response not OK show helpful message (try parse json)
-        let data;
-        try { data = await res.json(); } catch (e) { data = null; }
 
-        if (!res.ok) {
-          const msg = (data && data.error) ? data.error : `Server returned ${res.status}`;
-          out.innerHTML = `<p class="error">Error loading consultation: ${msg}</p>`;
-          return;
-        }
+// ----------------- UPLOAD PRESCRIPTION ------------------
+document.getElementById("uploadPrescriptionBtn").addEventListener('click', async () => {
+  try {
+    const file = document.getElementById("prescriptionFile").files[0];
+    if (!file) return alert("Please select a file.");
 
-        if (!data) {
-          out.innerHTML = "<p class='error'>Empty response from server.</p>";
-          return;
-        }
+    const fd = new FormData();
+    fd.append("prescription", file);
 
-        // Expected fields from your backend: parent_name, baby_name, date/created_at, status, symptoms, doctor_notes
-        out.innerHTML = `
-          <h2 class="title">Consultation Details</h2>
-          <div class="muted">Full details for consultation #${data.id}</div>
+    console.log('consult_view: uploading prescription for consult', consultId, file.name);
 
-          <div class="info-row">
-            <div><strong>Parent:</strong> ${data.parent_name || "N/A"}</div>
-            <div><strong>Baby:</strong> ${data.baby_name || "N/A"}</div>
-            <div class="chip">${(data.status || "Unknown").toUpperCase()}</div>
-          </div>
+    const res = await fetch(
+      `http://127.0.0.1:5000/api/consultations/${consultId}/prescription`,
+      { method: "POST", headers: { "Authorization": getToken() }, body: fd }
+    );
 
-          <div class="muted"><strong>Date:</strong> ${data.date || data.created_at || "N/A"}</div>
+    let data = {};
+    try { data = await res.json(); } catch (_) { }
 
-          <h3>Symptoms Reported</h3>
-          <p>${data.symptoms ? (Array.isArray(data.symptoms) ? data.symptoms.join(", ") : data.symptoms) : "No symptoms provided."}</p>
+    if (res.ok) {
+      document.getElementById("uploadStatus").innerText = "Uploaded";
+      document.getElementById("currentPrescription").innerHTML =
+        `<a href="http://127.0.0.1:5000${data.prescription_url}" target="_blank">View Prescription</a>`;
+    } else {
+      const msg = data && data.error ? data.error : `Upload failed (status ${res.status})`;
+      document.getElementById("uploadStatus").innerText = msg;
+      console.error('consult_view: upload prescription failed', res.status, data);
+    }
+  } catch (err) {
+    console.error('consult_view: uploadPrescription error', err);
+    document.getElementById("uploadStatus").innerText = 'Error uploading';
+  }
+});
 
-          <h3>Doctor Notes</h3>
-          <p>${data.doctor_notes || "No notes added yet."}</p>
 
-          ${data.prescription ? `<h3>Prescription</h3><p>${data.prescription}</p>` : ""}
+// ------------------------- CHAT -------------------------
+async function loadChat() {
+  const box = document.getElementById("chatBox");
 
-          ${data.attachments && data.attachments.length ? `
-            <h3>Attachments</h3>
-            <ul>
-              ${data.attachments.map(a => `<li><a href="${a.url}" target="_blank" rel="noopener">${a.name || a.url}</a></li>`).join("")}
-            </ul>` : ""
-          }
-        `;
+  const convUrl = `http://127.0.0.1:5000/api/consultations/${consultId}/conversation?_=${Date.now()}`;
+  const res = await fetch(convUrl, { headers: authHeaders(), cache: 'no-store' });
 
-      } catch (err) {
-        console.error(err);
-        out.innerHTML = `<p class="error">Error loading consultation. See console for details.</p>`;
-      }
-    })();
-  </script>
+  const data = await res.json();
+  if (!res.ok) {
+    box.innerHTML = "Chat unavailable";
+    return;
+  }
+
+  const token = getToken()?.split(".")[1];
+  let userId = null;
+  try {
+    userId = JSON.parse(atob(token)).sub;
+  } catch {}
+
+  box.innerHTML = "";
+  data.messages.forEach(m => {
+    const d = document.createElement("div");
+    d.className = "msg " + (m.sender_id == userId ? "me" : "they");
+    d.innerHTML = `${m.text}<div class="small">${new Date(m.created_at).toLocaleString()}</div>`;
+    box.appendChild(d);
+  });
+
+  box.scrollTop = box.scrollHeight;
+}
+
+document.getElementById("sendChatBtn").addEventListener('click', async () => {
+  try {
+    const text = document.getElementById("chatInput").value.trim();
+    if (!text) return;
+
+    console.log('consult_view: sending chat for consult', consultId, text);
+
+    const postUrl = `http://127.0.0.1:5000/api/consultations/${consultId}/conversation`;
+    const res = await fetch(postUrl, {
+      method: "POST",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ text })
+    });
+
+    if (res.ok) {
+      document.getElementById("chatInput").value = "";
+      await loadChat();
+    } else {
+      let data = {};
+      try { data = await res.json(); } catch (_) {}
+      console.error('consult_view: send chat failed', res.status, data);
+      alert(data.error || `Send failed (status ${res.status})`);
+    }
+  } catch (err) {
+    console.error('consult_view: sendChat error', err);
+    alert('Error sending message');
+  }
+});
+
+
+// --------------------- INITIAL LOAD ---------------------
+(async () => {
+  if (!window.consultIdPresent) {
+    console.warn('consult_view: consult_id missing — initialization skipped');
+    return;
+  }
+
+  const data = await fetchConsult();
+  if (!data) {
+    // consult not found; disable interactive controls to avoid 404s
+    try {
+      document.getElementById('saveNotesBtn').disabled = true;
+      document.getElementById('uploadPrescriptionBtn').disabled = true;
+      document.getElementById('sendChatBtn').disabled = true;
+    } catch (e) {}
+    return;
+  }
+
+  // Role-based UI: only doctors can edit/write notes or upload prescriptions.
+  const storedRole = (localStorage.getItem('role') || '').toLowerCase();
+  const isDoctor = storedRole === 'doctor' || (consultData && String(consultData.doctor_id) === String(localStorage.getItem('user_id')));
+
+  if (!isDoctor) {
+    // parent: view-only
+    try {
+      document.getElementById('doctorNotes').readOnly = true;
+      document.getElementById('saveNotesBtn').disabled = true;
+      document.getElementById('uploadPrescriptionBtn').disabled = true;
+      document.getElementById('prescriptionFile').disabled = true;
+    } catch (e) { console.warn('consult_view: failed to set view-only', e); }
+  }
+
+  // Only start chat polling if consult exists
+  await loadChat();
+  setInterval(loadChat, 5000);
+})();
+</script>
+
 </body>
 </html>
