@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Consultation Details</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f6f9fc; margin:0; padding:20px; }
+    .container { max-width:900px; margin:24px auto; background:#fff; padding:24px; border-radius:12px;
+                 box-shadow:0 6px 18px rgba(0,0,0,0.06); }
+    .back-btn { background:#0d6efd; color:#fff; border:none; padding:10px 16px; border-radius:8px;
+                cursor:pointer; margin-bottom:18px; }
+    .title { font-size:22px; font-weight:700; margin-bottom:8px; }
+    .muted { color:#6b7280; margin-bottom:8px; }
+    .info-row { display:flex; gap:12px; align-items:center; margin-bottom:10px; }
+    .chip { background:#eef2ff; color:#1e3a8a; padding:6px 10px; border-radius:999px; font-weight:600; }
+    h3 { margin-top:18px; margin-bottom:8px; }
+    p, li { line-height:1.5; }
+    ul { padding-left:20px; }
+    .error { color:#991b1b; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <button class="back-btn" onclick="history.back()">← Back</button>
+
+    <div id="consultDetails">
+      <h2 class="title">Loading Consultation...</h2>
+    </div>
+  </div>
+
+  <script>
+    (async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const consultId = urlParams.get("consult_id");
+      const out = document.getElementById("consultDetails");
+
+      if (!consultId) {
+        out.innerHTML = "<p class='error'>Invalid consult ID</p>";
+        return;
+      }
+
+      // Build headers and try to attach token from localStorage (common keys)
+      const headers = new Headers({ "Accept": "application/json" });
+      const possibleKeys = ["access_token", "token", "jwt", "auth_token"];
+      for (const k of possibleKeys) {
+        const val = localStorage.getItem(k);
+        if (val) {
+          // support tokens stored as "Bearer <token>" or raw token
+          headers.set("Authorization", val.startsWith("Bearer ") ? val : `Bearer ${val}`);
+          break;
+        }
+      }
+
+      // Fetch (send cookies too in case you use cookie-based sessions)
+      try {
+        const res = await fetch(`http://127.0.0.1:5000/api/consultations/${consultId}`, {
+          method: "GET",
+          headers,
+          credentials: "include"
+        });
+
+        // If response not OK show helpful message (try parse json)
+        let data;
+        try { data = await res.json(); } catch (e) { data = null; }
+
+        if (!res.ok) {
+          const msg = (data && data.error) ? data.error : `Server returned ${res.status}`;
+          out.innerHTML = `<p class="error">Error loading consultation: ${msg}</p>`;
+          return;
+        }
+
+        if (!data) {
+          out.innerHTML = "<p class='error'>Empty response from server.</p>";
+          return;
+        }
+
+        // Expected fields from your backend: parent_name, baby_name, date/created_at, status, symptoms, doctor_notes
+        out.innerHTML = `
+          <h2 class="title">Consultation Details</h2>
+          <div class="muted">Full details for consultation #${data.id}</div>
+
+          <div class="info-row">
+            <div><strong>Parent:</strong> ${data.parent_name || "N/A"}</div>
+            <div><strong>Baby:</strong> ${data.baby_name || "N/A"}</div>
+            <div class="chip">${(data.status || "Unknown").toUpperCase()}</div>
+          </div>
+
+          <div class="muted"><strong>Date:</strong> ${data.date || data.created_at || "N/A"}</div>
+
+          <h3>Symptoms Reported</h3>
+          <p>${data.symptoms ? (Array.isArray(data.symptoms) ? data.symptoms.join(", ") : data.symptoms) : "No symptoms provided."}</p>
+
+          <h3>Doctor Notes</h3>
+          <p>${data.doctor_notes || "No notes added yet."}</p>
+
+          ${data.prescription ? `<h3>Prescription</h3><p>${data.prescription}</p>` : ""}
+
+          ${data.attachments && data.attachments.length ? `
+            <h3>Attachments</h3>
+            <ul>
+              ${data.attachments.map(a => `<li><a href="${a.url}" target="_blank" rel="noopener">${a.name || a.url}</a></li>`).join("")}
+            </ul>` : ""
+          }
+        `;
+
+      } catch (err) {
+        console.error(err);
+        out.innerHTML = `<p class="error">Error loading consultation. See console for details.</p>`;
+      }
+    })();
+  </script>
+</body>
+</html>
