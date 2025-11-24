@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scan Full View</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f6f9fc;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    img {
+      max-width: 100%;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .title {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .back-btn {
+      background: #0d6efd;
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 15px;
+    }
+
+    h3 {
+      margin-top: 20px;
+    }
+
+    ul {
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <button class="back-btn" onclick="history.back()">← Back</button>
+
+    <div id="scanDetails">
+      <h2 class="title">Loading Scan Details...</h2>
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const scanId = urlParams.get("scan_id");
+
+    if (!scanId) {
+      alert("Invalid scan ID");
+    }
+
+    // Fetch scan details from backend
+    fetch(`http://127.0.0.1:5000/api/scans/${scanId}`)
+      .then(res => res.json())
+      .then(data => {
+
+        if (data.error) {
+          document.getElementById("scanDetails").innerHTML = "<p>Error loading scan.</p>";
+          return;
+        }
+
+        document.getElementById("scanDetails").innerHTML = `
+          <h2 class="title">${data.rash_type} (${data.confidence}%)</h2>
+
+          <img src="http://127.0.0.1:5000${data.image_url}" alt="Scan Image">
+
+          <p><strong>Date:</strong> ${data.created_at}</p>
+
+          <h3>Care Tips</h3>
+          <ul>
+            ${data.care_tips.map(t => `<li>${t}</li>`).join("")}
+          </ul>
+
+          <h3>Prevention</h3>
+          <ul>
+            ${data.prevention_tips.map(t => `<li>${t}</li>`).join("")}
+          </ul>
+        `;
+      })
+      .catch(err => {
+        console.error(err);
+        document.getElementById("scanDetails").innerHTML = "<p>Error loading scan.</p>";
+      });
+  </script>
+
+</body>
+</html>
