@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Scan Full View</title>
+  <title data-en="Scan Full View" data-kn="ಸ್ಕ್ಯಾನ್ ಸಂಪೂರ್ಣ ವೀಕ್ಷಣೆ">Scan Full View</title>
 
   <style>
     body {
@@ -42,6 +42,7 @@
       border-radius: 6px;
       cursor: pointer;
       margin-bottom: 15px;
+      font-size: 16px;
     }
 
     h3 {
@@ -56,54 +57,77 @@
 <body>
 
   <div class="container">
-    <button class="back-btn" onclick="history.back()">← Back</button>
+
+    <button class="back-btn" onclick="history.back()"
+      data-en="← Back"
+      data-kn="← ಹಿಂತಿರುಗಿ">← Back</button>
 
     <div id="scanDetails">
-      <h2 class="title">Loading Scan Details...</h2>
+      <h2 class="title"
+        data-en="Loading Scan Details..."
+        data-kn="ಸ್ಕ್ಯಾನ್ ವಿವರಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...">
+        Loading Scan Details...
+      </h2>
     </div>
+
   </div>
 
-  <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const scanId = urlParams.get("scan_id");
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const scanId = urlParams.get("scan_id");
 
-    if (!scanId) {
-      alert("Invalid scan ID");
-    }
+  if (!scanId) {
+    alert(
+      localStorage.getItem("lang") === "kn"
+        ? "ಅಮಾನ್ಯ ಸ್ಕ್ಯಾನ್ ID"
+        : "Invalid scan ID"
+    );
+  }
 
-    // Fetch scan details from backend
-    fetch(`http://127.0.0.1:5000/api/scans/${scanId}`)
-      .then(res => res.json())
-      .then(data => {
+  // Fetch scan details from backend
+  fetch(`http://127.0.0.1:5000/api/scans/${scanId}`)
+    .then(res => res.json())
+    .then(data => {
 
-        if (data.error) {
-          document.getElementById("scanDetails").innerHTML = "<p>Error loading scan.</p>";
-          return;
-        }
+      if (data.error) {
+        document.getElementById("scanDetails").innerHTML =
+          `<p data-en="Error loading scan." data-kn="ಸ್ಕ್ಯಾನ್ ಲೋಡ್ ಮಾಡುವಲ್ಲಿ ದೋಷ">Error loading scan.</p>`;
+        return;
+      }
 
-        document.getElementById("scanDetails").innerHTML = `
-          <h2 class="title">${data.rash_type} (${data.confidence}%)</h2>
+      // Kannada or English dynamic label text
+      const lang = localStorage.getItem("lang") || "en";
 
-          <img src="http://127.0.0.1:5000${data.image_url}" alt="Scan Image">
+      const dateLabel = lang === "kn" ? "ದಿನಾಂಕ:" : "Date:";
+      const careTipsLabel = lang === "kn" ? "ಕೇರ್ ಸಲಹೆಗಳು" : "Care Tips";
+      const preventionLabel = lang === "kn" ? "ತಡೆಗಟ್ಟುವಿಕೆ" : "Prevention";
 
-          <p><strong>Date:</strong> ${data.created_at}</p>
+      document.getElementById("scanDetails").innerHTML = `
+        <h2 class="title">${data.rash_type} (${data.confidence}%)</h2>
 
-          <h3>Care Tips</h3>
-          <ul>
-            ${data.care_tips.map(t => `<li>${t}</li>`).join("")}
-          </ul>
+        <img src="http://127.0.0.1:5000${data.image_url}" alt="Scan Image">
 
-          <h3>Prevention</h3>
-          <ul>
-            ${data.prevention_tips.map(t => `<li>${t}</li>`).join("")}
-          </ul>
-        `;
-      })
-      .catch(err => {
-        console.error(err);
-        document.getElementById("scanDetails").innerHTML = "<p>Error loading scan.</p>";
-      });
-  </script>
+        <p><strong>${dateLabel}</strong> ${data.created_at}</p>
+
+        <h3>${careTipsLabel}</h3>
+        <ul>
+          ${data.care_tips.map(t => `<li>${t}</li>`).join("")}
+        </ul>
+
+        <h3>${preventionLabel}</h3>
+        <ul>
+          ${data.prevention_tips.map(t => `<li>${t}</li>`).join("")}
+        </ul>
+      `;
+    })
+    .catch(err => {
+      console.error(err);
+      document.getElementById("scanDetails").innerHTML =
+        `<p data-en="Error loading scan." data-kn="ಸ್ಕ್ಯಾನ್ ಲೋಡ್ ಮಾಡುವಲ್ಲಿ ದೋಷ">Error loading scan.</p>`;
+    });
+</script>
+
+<script src="lang.js"></script>
 
 </body>
 </html>
