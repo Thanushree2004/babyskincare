@@ -453,7 +453,22 @@ def get_conversation(consult_id):
     if uid not in (c.parent_id, c.doctor_id):
         return jsonify({"error": "Forbidden"}), 403
 
-    conv = _get_or_create_conversation(consult_id, c.parent_id, c.doctor_id)
+    try:
+        conv = _get_or_create_conversation(consult_id, c.parent_id, c.doctor_id)
+    except Exception as e:
+        current_app.logger.exception("get_conversation: _get_or_create_conversation raised")
+        # try a final fallback: create by parent_id/doctor_id directly
+        try:
+            conv = Conversation.query.filter_by(parent_id=c.parent_id, doctor_id=c.doctor_id).first()
+            if not conv:
+                conv = Conversation(parent_id=c.parent_id, doctor_id=c.doctor_id)
+                db.session.add(conv)
+                db.session.commit()
+        except Exception:
+            db.session.rollback()
+            current_app.logger.exception('get_conversation: final fallback failed')
+            return jsonify({"conversation_id": None, "messages": []})
+
     if not conv:
         return jsonify({"conversation_id": None, "messages": []})
 
@@ -489,9 +504,26 @@ def post_message(consult_id):
     if not text:
         return jsonify({"error": "text required"}), 400
 
-    conv = _get_or_create_conversation(consult_id, c.parent_id, c.doctor_id)
+    # Try to get/create a conversation scoped to this consultation. If that fails,
+    # attempt a direct creation with parent/doctor fallback and include debug logging
+    try:
+        conv = _get_or_create_conversation(consult_id, c.parent_id, c.doctor_id)
+    except Exception as e:
+        current_app.logger.exception("post_message: _get_or_create_conversation raised")
+        conv = None
+
     if not conv:
-        return jsonify({"error": "Failed to create conversation"}), 500
+        try:
+            conv = Conversation.query.filter_by(parent_id=c.parent_id, doctor_id=c.doctor_id).first()
+            if not conv:
+                conv = Conversation(parent_id=c.parent_id, doctor_id=c.doctor_id)
+                db.session.add(conv)
+                db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.exception('post_message: fallback conversation create failed')
+            # expose a helpful error for debugging in dev (contains no sensitive data)
+            return jsonify({"error": "Failed to create conversation", "details": str(e)}), 500
 
     try:
         m = Message(conversation_id=conv.id, sender_id=uid, text=text)
