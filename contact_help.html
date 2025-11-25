@@ -104,97 +104,7 @@
     background-color: #419e45;
   }
 
-  /* CHATBOT */
-  .chatbot {
-    position: fixed;
-    bottom: 15px;
-    right: 15px;
-    width: 60px;
-    height: 60px;
-    background: white;
-    border-radius: 50%;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    z-index: 1000;
-    transition: all 0.4s ease;
-  }
-
-  .chatbot.expanded {
-    width: 300px;
-    height: 380px;
-    border-radius: 10px;
-  }
-
-  .chat-header {
-    background: #4CAF50;
-    color: white;
-    padding: 10px;
-    font-weight: bold;
-    text-align: center;
-    cursor: pointer;
-  }
-
-  .chat-body {
-    flex: 1;
-    padding: 10px;
-    overflow-y: auto;
-    font-size: 14px;
-    text-align: left;
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-
-  .chat-body.visible { opacity: 1; }
-
-  .chat-message {
-    margin: 10px 0;
-    padding: 12px 14px;
-    border-radius: 12px;
-    line-height: 1.6;
-    font-size: 15px;
-    max-width: 80%;
-    animation: fadeIn 0.3s forwards;
-  }
-
-  .user-message { background: #dcf8c6; align-self: flex-end; }
-  .bot-message { background: #e6e6ff; align-self: flex-start; }
-
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-  .chat-footer {
-    display: flex;
-    flex-direction: column;
-    border-top: 1px solid #ddd;
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-
-  .chat-footer.visible { opacity: 1; }
-
-  .quick-replies {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    padding: 5px;
-    background: #fafafa;
-    border-top: 1px solid #ddd;
-  }
-
-  .quick-replies button {
-    padding: 8px;
-    border-radius: 5px;
-    border: 1px solid #4CAF50;
-    background: white;
-    color: #4CAF50;
-    cursor: pointer;
-  }
-
-  .quick-replies button:hover {
-    background: #4CAF50;
-    color: white;
-  }
+  /* Chat widget removed */
 </style>
 </head>
 
@@ -235,20 +145,7 @@
   </form>
 </section>
 
-<!-- CHATBOT -->
-<div class="chatbot" id="chatbot">
-  <div class="chat-header" id="chatHeader">💬</div>
-  <div class="chat-body" id="chatBody"></div>
-  <div class="chat-footer" id="chatFooter">
-    <div class="quick-replies">
-      <button data-msg="Hi" data-en="Hi" data-kn="ಹಲೋ">Hi</button>
-      <button data-msg="What is this project" data-en="About Project" data-kn="ಯೋಜನೆ ಬಗ್ಗೆ">About Project</button>
-      <button data-msg="How does it work" data-en="How it works" data-kn="ಇದು ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ">How it works</button>
-      <button data-msg="Contact" data-en="Contact" data-kn="ಸಂಪರ್ಕಿಸಿ">Contact</button>
-      <button data-msg="Thanks" data-en="Thanks" data-kn="ಧನ್ಯವಾದಗಳು">Thanks</button>
-    </div>
-  </div>
-</div>
+<!-- Chat widget removed -->
 
 <script>
   /* Dashboard */
@@ -283,35 +180,7 @@
     },2000);
   });
 
-  /* Chatbot */
-  const chatbot=document.getElementById("chatbot");
-  const chatHeader=document.getElementById("chatHeader");
-  const chatBody=document.getElementById("chatBody");
-  const chatFooter=document.getElementById("chatFooter");
-
-  function appendMessage(msg,className){
-    const div=document.createElement("div");
-    div.className="chat-message "+className;
-    div.textContent=msg;
-    chatBody.appendChild(div);
-    chatBody.scrollTop=chatBody.scrollHeight;
-  }
-
-  chatHeader.addEventListener("click",()=>{
-    chatbot.classList.toggle("expanded");
-    chatBody.classList.toggle("visible");
-    chatFooter.classList.toggle("visible");
-
-    if(chatBody.innerHTML===""){
-      setTimeout(()=>appendMessage("Hi! I’m Baby Skin Helper 🤖. How can I help you today?","bot-message"),300);
-    }
-  });
-
-  document.querySelectorAll(".quick-replies button").forEach(btn=>{
-    btn.addEventListener("click",()=>{
-      appendMessage(btn.dataset.msg, "user-message");
-    });
-  });
+  /* Chat widget removed */
 
   /* Language Switcher */
   const switcher=document.getElementById("languageSwitcher");
