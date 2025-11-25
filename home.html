@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Home - Smart Baby Skin Scanner</title>
+  <title data-en="Home - Smart Baby Skin Scanner" data-kn="ಮುಖಪುಟ - ಸ್ಮಾರ್ಟ್ ಬೇಬಿ ಸ್ಕಿನ್ ಸ್ಕ್ಯಾನರ್">
+    Home - Smart Baby Skin Scanner
+  </title>
   <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/4762/4762967.png">
 
   <style>
@@ -16,7 +18,6 @@
       min-height: 100vh;
     }
 
-    /* NAVBAR */
     nav {
       background-color: rgba(76, 175, 80, 0.95);
       padding: 12px 30px;
@@ -61,11 +62,6 @@
       font-size: 16px;
     }
 
-    .logout-btn:hover {
-      background: #e8e8e8;
-    }
-
-    /* HERO TEXT ONLY */
     .hero {
       margin-top: 100px;
       padding: 40px 20px;
@@ -89,6 +85,7 @@
       font-size: 18px;
       line-height: 1.6;
     }
+
   </style>
 </head>
 
@@ -96,17 +93,24 @@
 
   <!-- NAVBAR -->
   <nav>
-    <div class="logo">👶 Baby Skin Care</div>
+    <div class="logo" 
+         data-en="👶 Baby Skin Care" 
+         data-kn="👶 ಬೇಬಿ ಸ್ಕಿನ್ ಕೇರ್">
+         👶 Baby Skin Care
+    </div>
 
     <ul class="nav-links">
-      <li><a href="home.html">Home</a></li>
-      <li><a href="upload.html">Upload</a></li>
-      <li><a href="about.html">About</a></li>
-      <li><a href="contact_help.html">Contact & Help</a></li>
-      <li><a href="#" onclick="openDashboard()">Dashboard →</a></li>
+      <li><a href="home.html" data-en="Home" data-kn="ಮುಖಪುಟ">Home</a></li>
+      <li><a href="upload.html" data-en="Upload" data-kn="ಅಪ್ಲೋಡ್">Upload</a></li>
+      <li><a href="about.html" data-en="About" data-kn="ಬಗ್ಗೆ">About</a></li>
+      <li><a href="contact_help.html" data-en="Contact & Help" data-kn="ಸಂಪರ್ಕ & ಸಹಾಯ">Contact & Help</a></li>
+      <li><a href="#" onclick="openDashboard()" data-en="Dashboard →" data-kn="ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ →">Dashboard →</a></li>
     </ul>
 
-    <button class="logout-btn" onclick="logout()">Logout</button>
+    <button class="logout-btn" onclick="logout()"
+            data-en="Logout" data-kn="ಲಾಗ್ ಔಟ್">
+            Logout
+    </button>
 
     <select id="languageSwitcher" style="margin-left: 15px;">
       <option value="en">English</option>
@@ -114,12 +118,16 @@
     </select>
   </nav>
 
-  <!-- HERO SECTION ONLY -->
+  <!-- HERO -->
   <div class="hero">
-    <h1>Welcome to Smart Baby Skin Scanner</h1>
-    <p>
-      An AI-powered solution for early detection of baby skin conditions.  
-      Analyze, predict, and consult — all in one place.
+    <h1 data-en="Welcome to Smart Baby Skin Scanner"
+        data-kn="ಸ್ಮಾರ್ಟ್ ಬೇಬಿ ಸ್ಕಿನ್ ಸ್ಕ್ಯಾನರ್‌ಗೆ ಸ್ವಾಗತ">
+        Welcome to Smart Baby Skin Scanner
+    </h1>
+
+    <p data-en="An AI-powered solution for early detection of baby skin conditions. Analyze, predict, and consult — all in one place."
+       data-kn="ಮಗುವಿನ ಚರ್ಮದ ಸಮಸ್ಯೆಗಳನ್ನು ಬೇಗ ಪತ್ತೆಹಚ್ಚಲು AI ಆಧಾರಿತ ಪರಿಹಾರ. ವಿಶ್ಲೇಷಿಸಿ, ಪೂರ್ವಾನುಮಾನ ಮಾಡಿ, ಮತ್ತು ಸಮಾಲೋಚನೆ—ಎಲ್ಲವೂ ಒಂದೇ ಸ್ಥಳದಲ್ಲಿ.">
+       An AI-powered solution for early detection of baby skin conditions.
     </p>
   </div>
 
@@ -147,14 +155,16 @@
     }
 
     const switcher = document.getElementById("languageSwitcher");
+    const savedLang = localStorage.getItem("lang") || "en";
+    switcher.value = savedLang;
+
     switcher.addEventListener("change", () => {
       localStorage.setItem("lang", switcher.value);
       location.reload();
     });
-
-    const savedLang = localStorage.getItem("lang") || "en";
-    switcher.value = savedLang;
   </script>
+
+  <script src="lang.js"></script>
 
 </body>
 </html>
