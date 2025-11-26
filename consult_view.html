@@ -34,8 +34,11 @@
 
   <hr style="margin:18px 0" />
 
-  <div>
-    <h3>Doctor Notes</h3>
+  <!-- Doctor notes: preview always shown inside the consult details; the editor below
+       is hidden by default and only revealed to doctors via JS. This prevents parents
+       from seeing or interacting with the save controls. -->
+  <div id="doctorNotesEditor" style="display:none; margin-top:12px">
+    <h3>Doctor Notes (Edit)</h3>
     <textarea id="doctorNotes"></textarea>
     <div class="row">
       <button id="saveNotesBtn" class="btn">Save Notes</button>
@@ -315,24 +318,24 @@ document.getElementById("sendChatBtn").addEventListener('click', async () => {
   const storedRole = (localStorage.getItem('role') || '').toLowerCase();
   const isDoctor = storedRole === 'doctor' || (consultData && String(consultData.doctor_id) === String(localStorage.getItem('user_id')));
 
-  if (!isDoctor) {
-    // parent: view-only
-    try {
-      document.getElementById('doctorNotes').readOnly = true;
-      document.getElementById('saveNotesBtn').disabled = true;
-      document.getElementById('uploadPrescriptionBtn').disabled = true;
-      document.getElementById('prescriptionFile').disabled = true;
-    } catch (e) { console.warn('consult_view: failed to set view-only', e); }
-  }
-  else {
-    // doctor: ensure controls are enabled for editing
-    try {
-      document.getElementById('doctorNotes').readOnly = false;
-      document.getElementById('saveNotesBtn').disabled = false;
-      document.getElementById('uploadPrescriptionBtn').disabled = false;
-      document.getElementById('prescriptionFile').disabled = false;
-    } catch (e) { console.warn('consult_view: failed to enable doctor controls', e); }
-  }
+  try {
+    const editor = document.getElementById('doctorNotesEditor');
+    if (isDoctor) {
+      // show editor to doctors
+      if (editor) editor.style.display = '';
+      try { document.getElementById('doctorNotes').readOnly = false; } catch(e){}
+      try { document.getElementById('saveNotesBtn').disabled = false; } catch(e){}
+      try { document.getElementById('uploadPrescriptionBtn').disabled = false; } catch(e){}
+      try { document.getElementById('prescriptionFile').disabled = false; } catch(e){}
+    } else {
+      // hide editor for parents (view-only experience)
+      if (editor) editor.style.display = 'none';
+      try { document.getElementById('doctorNotes').readOnly = true; } catch(e){}
+      try { document.getElementById('saveNotesBtn').disabled = true; } catch(e){}
+      try { document.getElementById('uploadPrescriptionBtn').disabled = true; } catch(e){}
+      try { document.getElementById('prescriptionFile').disabled = true; } catch(e){}
+    }
+  } catch (e) { console.warn('consult_view: role UI toggle failed', e); }
 
   // Only start chat polling if consult exists
   await loadChat();
