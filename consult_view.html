@@ -151,20 +151,7 @@ async function fetchConsult() {
       document.getElementById("currentPrescription").innerHTML = "No prescription uploaded.";
     }
 
-    // Raw debug output (helps confirm backend response)
-    let rawEl = document.getElementById('rawResponse');
-    if (!rawEl) {
-      rawEl = document.createElement('pre');
-      rawEl.id = 'rawResponse';
-      rawEl.style.marginTop = '12px';
-      rawEl.style.background = '#f3f4f6';
-      rawEl.style.padding = '10px';
-      rawEl.style.borderRadius = '8px';
-      rawEl.style.maxHeight = '240px';
-      rawEl.style.overflow = 'auto';
-      out.appendChild(rawEl);
-    }
-    rawEl.textContent = JSON.stringify(data, null, 2);
+    // (debug output removed) -- only show structured fields above
 
     console.log('consult_view: fetched', { url, consultId, data });
     consultData = data;
@@ -336,6 +323,15 @@ document.getElementById("sendChatBtn").addEventListener('click', async () => {
       document.getElementById('uploadPrescriptionBtn').disabled = true;
       document.getElementById('prescriptionFile').disabled = true;
     } catch (e) { console.warn('consult_view: failed to set view-only', e); }
+  }
+  else {
+    // doctor: ensure controls are enabled for editing
+    try {
+      document.getElementById('doctorNotes').readOnly = false;
+      document.getElementById('saveNotesBtn').disabled = false;
+      document.getElementById('uploadPrescriptionBtn').disabled = false;
+      document.getElementById('prescriptionFile').disabled = false;
+    } catch (e) { console.warn('consult_view: failed to enable doctor controls', e); }
   }
 
   // Only start chat polling if consult exists
